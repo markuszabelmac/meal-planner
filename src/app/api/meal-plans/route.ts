@@ -74,14 +74,14 @@ export async function POST(request: Request) {
         },
         update: {
           recipeId,
-          assignedBy: session.user!.id,
+          assignedBy: session.user!.id!,
         },
         create: {
           date: new Date(date),
           mealType,
           recipeId,
           forUserId,
-          assignedBy: session.user!.id,
+          assignedBy: session.user!.id!,
         },
         include: {
           recipe: { select: { id: true, name: true, category: true } },
