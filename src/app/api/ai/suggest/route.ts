@@ -60,7 +60,7 @@ Regeln:
 - Berücksichtige die bestehenden Rezepte und die Historie (schlage nicht das gleiche vor was sie gerade erst hatten)
 - Schlage typischerweise 3-5 Gerichte vor
 - Sei kreativ aber familienfreundlich
-- Antworte als JSON-Array mit diesen Feldern pro Rezept: name, description, ingredients, time`;
+- Antworte als JSON-Array mit diesen Feldern pro Rezept: name, description, ingredients (kommagetrennte Liste, z.B. "Lachs, Kartoffeln, Brokkoli"), time`;
 
   const userMessage =
     mode === "auto"
