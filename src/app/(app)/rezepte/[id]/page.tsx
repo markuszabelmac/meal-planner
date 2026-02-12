@@ -91,8 +91,12 @@ export default async function RecipeDetailPage({
         <div className="mb-6">
           <h3 className="mb-2 font-semibold">Zutaten</h3>
           <div className="rounded-lg border border-border bg-card p-4">
-            <p className="whitespace-pre-line text-sm leading-relaxed">
-              {recipe.ingredients}
+            <p className="text-sm leading-relaxed">
+              {recipe.ingredients
+                .split(/\n/)
+                .map((s) => s.trim())
+                .filter(Boolean)
+                .join(", ")}
             </p>
           </div>
         </div>
