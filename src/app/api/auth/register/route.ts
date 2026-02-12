@@ -3,6 +3,11 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
 
 export async function POST(request: Request) {
+  return NextResponse.json(
+    { error: "Registrierung ist deaktiviert" },
+    { status: 403 },
+  );
+
   const { email, password, displayName } = await request.json();
 
   if (!email || !password || !displayName) {
