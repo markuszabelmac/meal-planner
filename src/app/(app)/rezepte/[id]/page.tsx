@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { DeleteRecipeButton } from "@/components/delete-recipe-button";
+import { Breadcrumbs } from "@/components/breadcrumbs";
 
 export default async function RecipeDetailPage({
   params,
@@ -18,6 +19,12 @@ export default async function RecipeDetailPage({
 
   return (
     <div>
+      <Breadcrumbs
+        items={[
+          { label: "Rezepte", href: "/rezepte" },
+          { label: recipe.name },
+        ]}
+      />
       <div className="mb-6 flex items-start justify-between">
         <div>
           <h2 className="text-2xl font-bold">{recipe.name}</h2>
@@ -91,12 +98,6 @@ export default async function RecipeDetailPage({
         </div>
       )}
 
-      <Link
-        href="/rezepte"
-        className="inline-block text-sm text-primary hover:underline"
-      >
-        &larr; Alle Rezepte
-      </Link>
     </div>
   );
 }
