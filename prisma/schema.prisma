@@ -1,0 +1,56 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String     @id @default(cuid())
+  email         String     @unique
+  passwordHash  String     @map("password_hash")
+  displayName   String     @map("display_name")
+  createdAt     DateTime   @default(now()) @map("created_at")
+  updatedAt     DateTime   @updatedAt @map("updated_at")
+  recipes       Recipe[]
+  assignedMeals MealPlan[] @relation("AssignedBy")
+  meals         MealPlan[] @relation("ForUser")
+
+  @@map("users")
+}
+
+model Recipe {
+  id          String     @id @default(cuid())
+  name        String
+  description String?
+  ingredients String?
+  prepTime    Int?       @map("prep_time")
+  servings    Int?
+  category    String?
+  tags        String[]   @default([])
+  createdBy   String     @map("created_by")
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+  creator     User       @relation(fields: [createdBy], references: [id])
+  mealPlans   MealPlan[]
+
+  @@map("recipes")
+}
+
+model MealPlan {
+  id         String   @id @default(cuid())
+  date       DateTime @db.Date
+  mealType   String   @map("meal_type") // "lunch" or "dinner"
+  recipeId   String   @map("recipe_id")
+  forUserId  String   @map("for_user_id")
+  assignedBy String   @map("assigned_by")
+  createdAt  DateTime @default(now()) @map("created_at")
+  recipe     Recipe   @relation(fields: [recipeId], references: [id])
+  forUser    User     @relation("ForUser", fields: [forUserId], references: [id])
+  assigner   User     @relation("AssignedBy", fields: [assignedBy], references: [id])
+
+  @@unique([date, mealType, forUserId])
+  @@map("meal_plans")
+}
