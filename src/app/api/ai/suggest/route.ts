@@ -51,6 +51,17 @@ export async function POST(request: Request) {
     prefMap[p.key] = p.value;
   }
 
+  // Fetch learning signals: which AI suggestions were saved as recipes
+  const savedSuggestions = await prisma.aiMessage.findMany({
+    where: {
+      savedRecipeId: { not: null },
+      conversation: { userId: session.user.id },
+    },
+    select: { content: true },
+    orderBy: { createdAt: "desc" },
+    take: 20,
+  });
+
   const systemPrompt = `Du bist ein freundlicher Kochassistent für eine Familie mit 4 Personen.
 Du schlägst Rezepte vor und gibst Inspiration für die Wochenplanung.
 
@@ -65,6 +76,9 @@ ${prefMap.dietary_restrictions ? `- Ernährungseinschränkungen: ${prefMap.dieta
 ${prefMap.disliked_ingredients ? `- Unbeliebte Zutaten: ${prefMap.disliked_ingredients}` : ""}
 ${prefMap.cuisine_preferences ? `- Bevorzugte Küchen: ${prefMap.cuisine_preferences}` : ""}
 ${prefMap.general_notes ? `- Sonstiges: ${prefMap.general_notes}` : ""}
+
+Lernhistorie (Vorschläge die die Familie übernommen hat):
+${savedSuggestions.length > 0 ? savedSuggestions.map((s) => `- ${s.content.slice(0, 100)}`).join("\n") : "(noch keine)"}
 
 Regeln:
 - Antworte immer auf Deutsch
