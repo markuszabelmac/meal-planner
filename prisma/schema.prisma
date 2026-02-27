@@ -54,3 +54,12 @@ model MealPlan {
   @@unique([date, mealType, forUserId])
   @@map("meal_plans")
 }
+
+model FamilyPreference {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("family_preferences")
+}
