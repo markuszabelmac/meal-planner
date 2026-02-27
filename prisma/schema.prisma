@@ -17,6 +17,7 @@ model User {
   recipes       Recipe[]
   assignedMeals MealPlan[] @relation("AssignedBy")
   meals         MealPlan[] @relation("ForUser")
+  aiConversations AiConversation[]
 
   @@map("users")
 }
@@ -62,4 +63,27 @@ model FamilyPreference {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("family_preferences")
+}
+
+model AiConversation {
+  id        String      @id @default(cuid())
+  userId    String      @map("user_id")
+  user      User        @relation(fields: [userId], references: [id])
+  messages  AiMessage[]
+  createdAt DateTime    @default(now()) @map("created_at")
+  updatedAt DateTime    @updatedAt @map("updated_at")
+
+  @@map("ai_conversations")
+}
+
+model AiMessage {
+  id             String         @id @default(cuid())
+  conversationId String         @map("conversation_id")
+  conversation   AiConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           String
+  content        String
+  savedRecipeId  String?        @map("saved_recipe_id")
+  createdAt      DateTime       @default(now()) @map("created_at")
+
+  @@map("ai_messages")
 }
