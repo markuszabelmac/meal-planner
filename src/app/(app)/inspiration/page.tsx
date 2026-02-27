@@ -17,14 +17,11 @@ type Recipe = {
 
 function parseRecipes(content: string): Recipe[] | null {
   try {
-    // Try to extract JSON array from the response
-    const match = content.match(/\[[\s\S]*\]/);
-    if (!match) return null;
-    const parsed = JSON.parse(match[0]);
-    if (!Array.isArray(parsed) || parsed.length === 0) return null;
-    // Validate structure
-    if (!parsed[0].name) return null;
-    return parsed;
+    const parsed = JSON.parse(content);
+    const arr = Array.isArray(parsed) ? parsed : parsed.recipes;
+    if (!Array.isArray(arr) || arr.length === 0) return null;
+    if (!arr[0].name) return null;
+    return arr;
   } catch {
     return null;
   }
@@ -78,13 +75,12 @@ export default function InspirationPage() {
   }
 
   async function saveAsRecipe(recipe: Recipe) {
-    const text = `**${recipe.name}**\n${recipe.description}\nZutaten: ${recipe.ingredients}\nZubereitungszeit: ${recipe.time}`;
     setSavingRecipe(recipe.name);
 
     const res = await fetch("/api/ai/save-recipe", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text }),
+      body: JSON.stringify({ recipe }),
     });
 
     if (res.ok) {
