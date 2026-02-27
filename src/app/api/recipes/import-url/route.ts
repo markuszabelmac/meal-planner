@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { GoogleGenAI } from "@google/genai";
+import OpenAI from "openai";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
@@ -10,9 +10,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Nicht angemeldet" }, { status: 401 });
   }
 
-  if (!process.env.GEMINI_API_KEY) {
+  if (!process.env.OPENAI_API_KEY) {
     return NextResponse.json(
-      { error: "KI ist noch nicht konfiguriert" },
+      { error: "KI ist noch nicht konfiguriert (OPENAI_API_KEY fehlt in .env)" },
       { status: 503 },
     );
   }
@@ -47,13 +47,14 @@ export async function POST(request: Request) {
       .trim()
       .slice(0, 5000); // Limit to 5000 chars for AI
 
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-    const response = await ai.models.generateContent({
-      model: "gemini-2.0-flash",
-      contents: `Extrahiere das Rezept aus diesem Webseitentext:\n\n${textContent}`,
-      config: {
-        systemInstruction: `Extrahiere aus dem folgenden Webseitentext die Rezeptdaten und gib sie als JSON zurück.
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: `Extrahiere aus dem folgenden Webseitentext die Rezeptdaten und gib sie als JSON zurück.
 Das JSON muss genau dieses Format haben:
 {
   "name": "Rezeptname",
@@ -71,12 +72,17 @@ Regeln:
 - Verwende für die Kategorie eine von: Pasta, Fleisch, Fisch, Vegetarisch, Vegan, Suppe, Salat, Auflauf, Asiatisch, Schnell & Einfach
 - Falls die Zubereitungszeit nicht genannt wird, schätze sie
 - Portionen standardmäßig auf 4`,
-        responseMimeType: "application/json",
-        maxOutputTokens: 1000,
-      },
+        },
+        {
+          role: "user",
+          content: `Extrahiere das Rezept aus diesem Webseitentext:\n\n${textContent}`,
+        },
+      ],
+      response_format: { type: "json_object" },
+      max_tokens: 1000,
     });
 
-    const jsonText = response.text ?? "";
+    const jsonText = response.choices[0]?.message?.content ?? "{}";
     const recipeData = JSON.parse(jsonText);
 
     const recipe = await prisma.recipe.create({

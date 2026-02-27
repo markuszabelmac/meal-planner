@@ -1,23 +1,22 @@
 import { NextResponse } from "next/server";
-import { GoogleGenAI } from "@google/genai";
+import OpenAI from "openai";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
-// POST /api/ai/suggest — get recipe suggestions from Gemini
 export async function POST(request: Request) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Nicht angemeldet" }, { status: 401 });
   }
 
-  if (!process.env.GEMINI_API_KEY) {
+  if (!process.env.OPENAI_API_KEY) {
     return NextResponse.json(
-      { error: "KI ist noch nicht konfiguriert (GEMINI_API_KEY fehlt in .env)" },
+      { error: "KI ist noch nicht konfiguriert (OPENAI_API_KEY fehlt in .env)" },
       { status: 503 },
     );
   }
 
-  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
   const { message, mode } = await request.json();
 
@@ -60,7 +59,8 @@ Regeln:
 - Berücksichtige die bestehenden Rezepte und die Historie (schlage nicht das gleiche vor was sie gerade erst hatten)
 - Schlage typischerweise 3-5 Gerichte vor
 - Sei kreativ aber familienfreundlich
-- Antworte als JSON-Array mit diesen Feldern pro Rezept: name, description, ingredients (kommagetrennte Liste, z.B. "Lachs, Kartoffeln, Brokkoli"), time`;
+- Antworte als JSON-Array mit diesen Feldern pro Rezept: name, description, ingredients (kommagetrennte Liste, z.B. "Lachs, Kartoffeln, Brokkoli"), time
+- Deine Antwort MUSS ein JSON-Objekt mit einem "recipes" Feld sein, das ein Array enthält`;
 
   const userMessage =
     mode === "auto"
@@ -68,21 +68,21 @@ Regeln:
       : message;
 
   try {
-    const response = await ai.models.generateContent({
-      model: "gemini-2.0-flash",
-      contents: userMessage,
-      config: {
-        systemInstruction: systemPrompt,
-        maxOutputTokens: 1500,
-        responseMimeType: "application/json",
-      },
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userMessage },
+      ],
+      response_format: { type: "json_object" },
+      max_tokens: 1500,
     });
 
-    const text = response.text ?? "";
+    const text = response.choices[0]?.message?.content ?? "{}";
 
     return NextResponse.json({ response: text });
   } catch (error) {
-    console.error("Gemini API error:", error);
+    console.error("OpenAI API error:", error);
     return NextResponse.json(
       { error: "Fehler bei der KI-Anfrage" },
       { status: 500 },
