@@ -18,7 +18,7 @@ export async function POST(request: Request) {
 
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-  const { message, mode } = await request.json();
+  const { message, mode, conversationId } = await request.json();
 
   // Fetch existing recipes for context
   const existingRecipes = await prisma.recipe.findMany({
@@ -95,13 +95,32 @@ Regeln:
       ? "Schlage mir ein paar neue Gerichte für die nächste Woche vor, die wir noch nicht in unserer Sammlung haben und die wir in letzter Zeit nicht hatten. Berücksichtige Abwechslung bei den Kategorien."
       : message;
 
+  // Build conversation history for OpenAI
+  const chatMessages: Array<{ role: "system" | "user" | "assistant"; content: string }> = [
+    { role: "system", content: systemPrompt },
+  ];
+
+  if (conversationId) {
+    const history = await prisma.aiMessage.findMany({
+      where: { conversationId },
+      orderBy: { createdAt: "asc" },
+      take: 10,
+      select: { role: true, content: true },
+    });
+    for (const msg of history) {
+      chatMessages.push({
+        role: msg.role as "user" | "assistant",
+        content: msg.content,
+      });
+    }
+  }
+
+  chatMessages.push({ role: "user", content: userMessage });
+
   try {
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userMessage },
-      ],
+      messages: chatMessages,
       response_format: { type: "json_object" },
       max_tokens: 1500,
     });

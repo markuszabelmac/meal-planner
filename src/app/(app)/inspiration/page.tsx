@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 
 type Message = {
+  id?: string;
   role: "user" | "assistant";
   content: string;
 };
@@ -13,6 +14,13 @@ type Recipe = {
   description: string;
   ingredients: string;
   time: string;
+};
+
+type Conversation = {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+  messages: { content: string; role: string }[];
 };
 
 function parseRecipes(content: string): Recipe[] | null {
@@ -29,52 +37,117 @@ function parseRecipes(content: string): Recipe[] | null {
 
 export default function InspirationPage() {
   const router = useRouter();
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [savingRecipe, setSavingRecipe] = useState<string | null>(null);
 
+  // Load conversations on mount
+  useEffect(() => {
+    fetch("/api/conversations")
+      .then((r) => r.json())
+      .then(setConversations)
+      .catch(() => {});
+  }, []);
+
+  // Load conversation messages when selected
+  const loadConversation = useCallback(async (id: string) => {
+    setActiveConversationId(id);
+    const res = await fetch(`/api/conversations/${id}`);
+    if (res.ok) {
+      const data = await res.json();
+      setMessages(
+        data.messages.map((m: { id: string; role: string; content: string }) => ({
+          id: m.id,
+          role: m.role as "user" | "assistant",
+          content: m.content,
+        }))
+      );
+    }
+  }, []);
+
+  function startNewConversation() {
+    setActiveConversationId(null);
+    setMessages([]);
+  }
+
   async function sendMessage(userMessage?: string) {
     const message = userMessage || input.trim();
     const mode = message ? "chat" : "auto";
+    const displayMessage = mode === "auto" ? "Automatische Vorschläge..." : message;
 
-    if (message) {
-      setMessages((prev) => [...prev, { role: "user", content: message }]);
-    }
+    setMessages((prev) => [...prev, { role: "user", content: displayMessage }]);
     setInput("");
     setLoading(true);
 
-    const res = await fetch("/api/ai/suggest", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        message: message || undefined,
-        mode,
-      }),
-    });
+    try {
+      // Create conversation if needed
+      let convId = activeConversationId;
+      if (!convId) {
+        const convRes = await fetch("/api/conversations", { method: "POST" });
+        const conv = await convRes.json();
+        convId = conv.id;
+        setActiveConversationId(convId);
+      }
 
-    setLoading(false);
+      // Store user message
+      await fetch(`/api/conversations/${convId}/messages`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role: "user", content: displayMessage }),
+      });
 
-    if (!res.ok) {
+      // Get AI response
+      const res = await fetch("/api/ai/suggest", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: message || undefined,
+          mode,
+          conversationId: convId,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        setMessages((prev) => [
+          ...prev,
+          { role: "assistant", content: data.error || "Fehler bei der Anfrage" },
+        ]);
+        return;
+      }
+
       const data = await res.json();
+
+      // Store assistant message
+      const msgRes = await fetch(`/api/conversations/${convId}/messages`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role: "assistant", content: data.response }),
+      });
+      const savedMsg = await msgRes.json();
+
       setMessages((prev) => [
         ...prev,
-        {
-          role: "assistant",
-          content: data.error || "Fehler bei der Anfrage",
-        },
+        { id: savedMsg.id, role: "assistant", content: data.response },
       ]);
-      return;
-    }
 
-    const data = await res.json();
-    setMessages((prev) => [
-      ...prev,
-      { role: "assistant", content: data.response },
-    ]);
+      // Refresh conversation list
+      const listRes = await fetch("/api/conversations");
+      if (listRes.ok) setConversations(await listRes.json());
+    } catch {
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: "Verbindungsfehler" },
+      ]);
+    } finally {
+      setLoading(false);
+    }
   }
 
-  async function saveAsRecipe(recipe: Recipe) {
+  async function saveAsRecipe(recipe: Recipe, messageId?: string) {
     setSavingRecipe(recipe.name);
 
     const res = await fetch("/api/ai/save-recipe", {
@@ -85,6 +158,19 @@ export default function InspirationPage() {
 
     if (res.ok) {
       const saved = await res.json();
+
+      // Link message to saved recipe
+      if (messageId && activeConversationId) {
+        await fetch(
+          `/api/conversations/${activeConversationId}/messages/${messageId}`,
+          {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ savedRecipeId: saved.id }),
+          }
+        );
+      }
+
       router.push(`/rezepte/${saved.id}`);
     } else {
       setSavingRecipe(null);
@@ -96,6 +182,42 @@ export default function InspirationPage() {
     <div className="flex flex-col">
       <h2 className="mb-4 text-2xl font-bold">Inspiration</h2>
 
+      {/* Conversation list */}
+      {conversations.length > 0 && (
+        <div className="mb-4 flex gap-2 overflow-x-auto pb-2">
+          <button
+            onClick={startNewConversation}
+            className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+              !activeConversationId
+                ? "bg-primary text-white"
+                : "border border-border bg-card text-muted hover:text-foreground"
+            }`}
+          >
+            + Neu
+          </button>
+          {conversations.map((conv) => {
+            const preview =
+              conv.messages[0]?.content?.slice(0, 30) ||
+              new Date(conv.createdAt).toLocaleDateString("de-DE");
+            const isActive = conv.id === activeConversationId;
+            return (
+              <button
+                key={conv.id}
+                onClick={() => loadConversation(conv.id)}
+                className={`shrink-0 rounded-full px-3 py-1.5 text-xs transition-colors ${
+                  isActive
+                    ? "bg-primary text-white"
+                    : "border border-border bg-card text-muted hover:text-foreground"
+                }`}
+              >
+                {preview}...
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Quick prompts for new conversations */}
       {messages.length === 0 && !loading && (
         <div className="mb-6">
           <p className="mb-4 text-muted">
@@ -190,7 +312,7 @@ export default function InspirationPage() {
                           </p>
                         </div>
                         <button
-                          onClick={() => saveAsRecipe(recipe)}
+                          onClick={() => saveAsRecipe(recipe, msg.id)}
                           disabled={isSaving}
                           className="mt-3 w-full rounded-lg bg-primary px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-50"
                         >
