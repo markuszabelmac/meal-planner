@@ -15,6 +15,15 @@ export async function POST(
   const { id } = await params;
   const { role, content } = await request.json();
 
+  // Validate role to prevent injection of system messages
+  if (role !== "user" && role !== "assistant") {
+    return NextResponse.json({ error: "Ungültige Rolle" }, { status: 400 });
+  }
+
+  if (!content || typeof content !== "string") {
+    return NextResponse.json({ error: "Inhalt fehlt" }, { status: 400 });
+  }
+
   // Verify the conversation belongs to the user
   const conversation = await prisma.aiConversation.findFirst({
     where: { id, userId: session.user.id },

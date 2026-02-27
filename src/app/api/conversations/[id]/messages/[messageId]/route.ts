@@ -25,7 +25,7 @@ export async function PATCH(
   }
 
   const updated = await prisma.aiMessage.update({
-    where: { id: messageId },
+    where: { id: messageId, conversationId: id },
     data: { savedRecipeId },
   });
 

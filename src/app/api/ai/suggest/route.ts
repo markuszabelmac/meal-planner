@@ -72,13 +72,22 @@ Kürzlich gekochte Gerichte (letzte 2 Wochen):
 ${recentList || "(noch keine)"}
 
 Familieneinstellungen:
-${prefMap.dietary_restrictions ? `- Ernährungseinschränkungen: ${prefMap.dietary_restrictions}` : ""}
-${prefMap.disliked_ingredients ? `- Unbeliebte Zutaten: ${prefMap.disliked_ingredients}` : ""}
-${prefMap.cuisine_preferences ? `- Bevorzugte Küchen: ${prefMap.cuisine_preferences}` : ""}
-${prefMap.general_notes ? `- Sonstiges: ${prefMap.general_notes}` : ""}
+${[
+  prefMap.dietary_restrictions && `- Ernährungseinschränkungen: ${prefMap.dietary_restrictions}`,
+  prefMap.disliked_ingredients && `- Unbeliebte Zutaten: ${prefMap.disliked_ingredients}`,
+  prefMap.cuisine_preferences && `- Bevorzugte Küchen: ${prefMap.cuisine_preferences}`,
+  prefMap.general_notes && `- Sonstiges: ${prefMap.general_notes}`,
+].filter(Boolean).join("\n") || "(keine)"}
 
 Lernhistorie (Vorschläge die die Familie übernommen hat):
-${savedSuggestions.length > 0 ? savedSuggestions.map((s) => `- ${s.content.slice(0, 100)}`).join("\n") : "(noch keine)"}
+${savedSuggestions.length > 0 ? savedSuggestions.map((s) => {
+  try {
+    const parsed = JSON.parse(s.content);
+    const recipes = Array.isArray(parsed) ? parsed : parsed.recipes;
+    if (Array.isArray(recipes)) return recipes.map((r: { name: string }) => `- ${r.name}`).join("\n");
+  } catch {}
+  return `- ${s.content.slice(0, 100)}`;
+}).join("\n") : "(noch keine)"}
 
 Regeln:
 - Antworte immer auf Deutsch
@@ -103,10 +112,11 @@ Regeln:
   if (conversationId) {
     const history = await prisma.aiMessage.findMany({
       where: { conversationId },
-      orderBy: { createdAt: "asc" },
+      orderBy: { createdAt: "desc" },
       take: 10,
       select: { role: true, content: true },
     });
+    history.reverse();
     for (const msg of history) {
       chatMessages.push({
         role: msg.role as "user" | "assistant",
