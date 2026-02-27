@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 type FamilyMember = {
   id: string;
@@ -61,17 +62,25 @@ export default function FamilyPage() {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <h2 className="text-2xl font-bold">Familie</h2>
-        {!showForm && (
-          <button
-            onClick={() => {
-              setShowForm(true);
-              setSuccess("");
-            }}
-            className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-hover"
+        <div className="flex items-center gap-2">
+          <Link
+            href="/familie/einstellungen"
+            className="rounded-lg border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-background"
           >
-            + Mitglied anlegen
-          </button>
-        )}
+            Einstellungen
+          </Link>
+          {!showForm && (
+            <button
+              onClick={() => {
+                setShowForm(true);
+                setSuccess("");
+              }}
+              className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-hover"
+            >
+              + Mitglied anlegen
+            </button>
+          )}
+        </div>
       </div>
 
       {success && (
