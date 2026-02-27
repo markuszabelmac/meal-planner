@@ -44,8 +44,10 @@ export async function POST(request: Request) {
 
   const recentList = recentMeals.map((m) => `- ${m.recipe.name}`).join("\n");
 
-  // Fetch family preferences
-  const preferences = await prisma.familyPreference.findMany();
+  // Fetch user preferences
+  const preferences = await prisma.userPreference.findMany({
+    where: { userId: session.user.id },
+  });
   const prefMap: Record<string, string> = {};
   for (const p of preferences) {
     prefMap[p.key] = p.value;

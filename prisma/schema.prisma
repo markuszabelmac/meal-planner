@@ -18,6 +18,7 @@ model User {
   assignedMeals MealPlan[] @relation("AssignedBy")
   meals         MealPlan[] @relation("ForUser")
   aiConversations AiConversation[]
+  preferences     UserPreference[]
 
   @@map("users")
 }
@@ -56,13 +57,16 @@ model MealPlan {
   @@map("meal_plans")
 }
 
-model FamilyPreference {
+model UserPreference {
   id        String   @id @default(cuid())
-  key       String   @unique
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id])
+  key       String
   value     String
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  @@map("family_preferences")
+  @@unique([userId, key])
+  @@map("user_preferences")
 }
 
 model AiConversation {
