@@ -44,6 +44,13 @@ export async function POST(request: Request) {
 
   const recentList = recentMeals.map((m) => `- ${m.recipe.name}`).join("\n");
 
+  // Fetch family preferences
+  const preferences = await prisma.familyPreference.findMany();
+  const prefMap: Record<string, string> = {};
+  for (const p of preferences) {
+    prefMap[p.key] = p.value;
+  }
+
   const systemPrompt = `Du bist ein freundlicher Kochassistent für eine Familie mit 4 Personen.
 Du schlägst Rezepte vor und gibst Inspiration für die Wochenplanung.
 
@@ -53,11 +60,18 @@ ${recipeList || "(noch keine)"}
 Kürzlich gekochte Gerichte (letzte 2 Wochen):
 ${recentList || "(noch keine)"}
 
+Familieneinstellungen:
+${prefMap.dietary_restrictions ? `- Ernährungseinschränkungen: ${prefMap.dietary_restrictions}` : ""}
+${prefMap.disliked_ingredients ? `- Unbeliebte Zutaten: ${prefMap.disliked_ingredients}` : ""}
+${prefMap.cuisine_preferences ? `- Bevorzugte Küchen: ${prefMap.cuisine_preferences}` : ""}
+${prefMap.general_notes ? `- Sonstiges: ${prefMap.general_notes}` : ""}
+
 Regeln:
 - Antworte immer auf Deutsch
 - Schlage konkrete Gerichte mit kurzen Beschreibungen vor
 - Berücksichtige die bestehenden Rezepte und die Historie (schlage nicht das gleiche vor was sie gerade erst hatten)
 - Schlage typischerweise 3-5 Gerichte vor
+- Berücksichtige IMMER die Familieneinstellungen (Allergien, unbeliebte Zutaten, etc.)
 - Sei kreativ aber familienfreundlich
 - Antworte als JSON-Array mit diesen Feldern pro Rezept: name, description, ingredients (kommagetrennte Liste, z.B. "Lachs, Kartoffeln, Brokkoli"), time
 - Deine Antwort MUSS ein JSON-Objekt mit einem "recipes" Feld sein, das ein Array enthält`;
