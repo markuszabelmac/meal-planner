@@ -32,54 +32,53 @@ export async function GET(request: Request) {
       forUser: { select: { id: true, displayName: true } },
       assigner: { select: { displayName: true } },
     },
-    orderBy: [{ date: "asc" }, { mealType: "asc" }],
+    orderBy: [{ date: "asc" }],
   });
 
   return NextResponse.json(mealPlans);
 }
 
-// POST /api/meal-plans — assign a recipe for one or more users
+// POST /api/meal-plans — assign a meal (recipe or custom text) for one or more users
 export async function POST(request: Request) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Nicht angemeldet" }, { status: 401 });
   }
 
-  const { date, mealType, recipeId, forUserIds } = await request.json();
+  const { date, recipeId, customMeal, forUserIds } = await request.json();
 
-  if (!date || !mealType || !recipeId || !forUserIds?.length) {
+  if (!date || !forUserIds?.length) {
     return NextResponse.json(
-      { error: "date, mealType, recipeId und forUserIds erforderlich" },
+      { error: "date und forUserIds erforderlich" },
       { status: 400 },
     );
   }
 
-  if (!["lunch", "dinner"].includes(mealType)) {
+  if (!recipeId && !customMeal) {
     return NextResponse.json(
-      { error: "mealType muss 'lunch' oder 'dinner' sein" },
+      { error: "recipeId oder customMeal erforderlich" },
       { status: 400 },
     );
   }
 
-  // Upsert for each selected user
   const results = await Promise.all(
     (forUserIds as string[]).map((forUserId) =>
       prisma.mealPlan.upsert({
         where: {
-          date_mealType_forUserId: {
+          date_forUserId: {
             date: new Date(date),
-            mealType,
             forUserId,
           },
         },
         update: {
-          recipeId,
+          recipeId: recipeId || null,
+          customMeal: customMeal || null,
           assignedBy: session.user!.id!,
         },
         create: {
           date: new Date(date),
-          mealType,
-          recipeId,
+          recipeId: recipeId || null,
+          customMeal: customMeal || null,
           forUserId,
           assignedBy: session.user!.id!,
         },
@@ -95,7 +94,44 @@ export async function POST(request: Request) {
   return NextResponse.json(results, { status: 201 });
 }
 
-// DELETE /api/meal-plans?date=2026-02-10&mealType=lunch&forUserId=xxx
+// PUT /api/meal-plans — update an existing entry
+export async function PUT(request: Request) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Nicht angemeldet" }, { status: 401 });
+  }
+
+  const { id, recipeId, customMeal } = await request.json();
+
+  if (!id) {
+    return NextResponse.json({ error: "id erforderlich" }, { status: 400 });
+  }
+
+  if (!recipeId && !customMeal) {
+    return NextResponse.json(
+      { error: "recipeId oder customMeal erforderlich" },
+      { status: 400 },
+    );
+  }
+
+  const updated = await prisma.mealPlan.update({
+    where: { id },
+    data: {
+      recipeId: recipeId || null,
+      customMeal: customMeal || null,
+      assignedBy: session.user!.id!,
+    },
+    include: {
+      recipe: { select: { id: true, name: true, category: true } },
+      forUser: { select: { id: true, displayName: true } },
+      assigner: { select: { displayName: true } },
+    },
+  });
+
+  return NextResponse.json(updated);
+}
+
+// DELETE /api/meal-plans?id=xxx
 export async function DELETE(request: Request) {
   const session = await auth();
   if (!session?.user?.id) {
@@ -103,26 +139,16 @@ export async function DELETE(request: Request) {
   }
 
   const { searchParams } = new URL(request.url);
-  const date = searchParams.get("date");
-  const mealType = searchParams.get("mealType");
-  const forUserId = searchParams.get("forUserId");
+  const id = searchParams.get("id");
 
-  if (!date || !mealType || !forUserId) {
+  if (!id) {
     return NextResponse.json(
-      { error: "date, mealType und forUserId Parameter erforderlich" },
+      { error: "id Parameter erforderlich" },
       { status: 400 },
     );
   }
 
-  await prisma.mealPlan.delete({
-    where: {
-      date_mealType_forUserId: {
-        date: new Date(date),
-        mealType,
-        forUserId,
-      },
-    },
-  });
+  await prisma.mealPlan.delete({ where: { id } });
 
   return NextResponse.json({ success: true });
 }

@@ -44,16 +44,16 @@ model Recipe {
 model MealPlan {
   id         String   @id @default(cuid())
   date       DateTime @db.Date
-  mealType   String   @map("meal_type") // "lunch" or "dinner"
-  recipeId   String   @map("recipe_id")
+  recipeId   String?  @map("recipe_id")
+  customMeal String?  @map("custom_meal")
   forUserId  String   @map("for_user_id")
   assignedBy String   @map("assigned_by")
   createdAt  DateTime @default(now()) @map("created_at")
-  recipe     Recipe   @relation(fields: [recipeId], references: [id])
+  recipe     Recipe?  @relation(fields: [recipeId], references: [id])
   forUser    User     @relation("ForUser", fields: [forUserId], references: [id])
   assigner   User     @relation("AssignedBy", fields: [assignedBy], references: [id])
 
-  @@unique([date, mealType, forUserId])
+  @@unique([date, forUserId])
   @@map("meal_plans")
 }
 

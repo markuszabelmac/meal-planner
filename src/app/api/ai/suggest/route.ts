@@ -42,7 +42,7 @@ export async function POST(request: Request) {
     .map((r) => `- ${r.name}${r.category ? ` (${r.category})` : ""}`)
     .join("\n");
 
-  const recentList = recentMeals.map((m) => `- ${m.recipe.name}`).join("\n");
+  const recentList = recentMeals.map((m) => `- ${m.recipe?.name ?? m.customMeal ?? "Unbekannt"}`).join("\n");
 
   // Fetch user preferences
   const preferences = await prisma.userPreference.findMany({

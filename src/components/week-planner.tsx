@@ -19,18 +19,17 @@ type FamilyMember = {
 type MealPlanEntry = {
   id: string;
   date: string;
-  mealType: string;
-  recipe: { id: string; name: string; category: string | null };
+  recipeId: string | null;
+  customMeal: string | null;
+  recipe: { id: string; name: string; category: string | null } | null;
   forUser: { id: string; displayName: string };
   assigner: { displayName: string };
 };
 
 type PickerTarget = {
   date: string;
-  mealType: "lunch" | "dinner";
+  editingEntry?: MealPlanEntry;
 } | null;
-
-const MEAL_LABELS = { lunch: "Mittagessen", dinner: "Abendessen" } as const;
 
 export function WeekPlanner() {
   const [currentDate, setCurrentDate] = useState(() => getMonday(new Date()));
@@ -43,7 +42,6 @@ export function WeekPlanner() {
   const from = toDateString(weekDays[0]);
   const to = toDateString(weekDays[6]);
 
-  // Load family members once
   useEffect(() => {
     fetch("/api/users")
       .then((r) => r.json())
@@ -78,51 +76,66 @@ export function WeekPlanner() {
     setCurrentDate(getMonday(new Date()));
   }
 
-  function getEntries(date: string, mealType: string): MealPlanEntry[] {
-    return mealPlans.filter(
-      (mp) => mp.date.substring(0, 10) === date && mp.mealType === mealType,
-    );
+  function getEntries(date: string): MealPlanEntry[] {
+    return mealPlans.filter((mp) => mp.date.substring(0, 10) === date);
   }
 
-  async function assignRecipe(
-    recipe: { id: string; name: string },
+  function getMealLabel(entry: MealPlanEntry): string {
+    if (entry.recipe) return entry.recipe.name;
+    return entry.customMeal || "";
+  }
+
+  async function assignMeal(
+    meal: { id?: string; name: string; customMeal?: string },
     forUserIds: string[],
   ) {
     if (!pickerTarget) return;
 
-    await fetch("/api/meal-plans", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        date: pickerTarget.date,
-        mealType: pickerTarget.mealType,
-        recipeId: recipe.id,
-        forUserIds,
-      }),
-    });
+    if (pickerTarget.editingEntry) {
+      await fetch("/api/meal-plans", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: pickerTarget.editingEntry.id,
+          recipeId: meal.id || null,
+          customMeal: meal.customMeal || null,
+        }),
+      });
+    } else {
+      await fetch("/api/meal-plans", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          date: pickerTarget.date,
+          recipeId: meal.id || null,
+          customMeal: meal.customMeal || null,
+          forUserIds,
+        }),
+      });
+    }
 
     setPickerTarget(null);
     fetchPlans();
   }
 
-  async function removeEntry(date: string, mealType: string, forUserId: string) {
-    await fetch(
-      `/api/meal-plans?date=${date}&mealType=${mealType}&forUserId=${forUserId}`,
-      { method: "DELETE" },
-    );
+  async function removeEntry(id: string) {
+    await fetch(`/api/meal-plans?id=${id}`, { method: "DELETE" });
     fetchPlans();
   }
 
-  // Group entries by recipe for compact display
   function groupEntries(entries: MealPlanEntry[]) {
     const groups = new Map<
       string,
-      { recipe: MealPlanEntry["recipe"]; members: MealPlanEntry[] }
+      { label: string; recipe: MealPlanEntry["recipe"]; members: MealPlanEntry[] }
     >();
     for (const entry of entries) {
-      const key = entry.recipe.id;
+      const key = entry.recipe ? entry.recipe.id : `custom:${entry.customMeal}`;
       if (!groups.has(key)) {
-        groups.set(key, { recipe: entry.recipe, members: [] });
+        groups.set(key, {
+          label: getMealLabel(entry),
+          recipe: entry.recipe,
+          members: [],
+        });
       }
       groups.get(key)!.members.push(entry);
     }
@@ -162,6 +175,11 @@ export function WeekPlanner() {
           {weekDays.map((day) => {
             const dateStr = toDateString(day);
             const today = isToday(day);
+            const entries = getEntries(dateStr);
+            const groups = groupEntries(entries);
+            const allAssigned =
+              entries.length >= familyMembers.length &&
+              familyMembers.length > 0;
 
             return (
               <div
@@ -185,108 +203,90 @@ export function WeekPlanner() {
                   )}
                 </h3>
 
-                <div className="grid grid-cols-2 gap-3">
-                  {(["lunch", "dinner"] as const).map((mealType) => {
-                    const entries = getEntries(dateStr, mealType);
-                    const groups = groupEntries(entries);
-                    const allAssigned =
-                      entries.length >= familyMembers.length &&
-                      familyMembers.length > 0;
-
-                    return (
-                      <div key={mealType}>
-                        <p className="mb-1.5 text-xs text-muted">
-                          {MEAL_LABELS[mealType]}
+                {groups.length > 0 && (
+                  <div className="space-y-1.5">
+                    {groups.map(({ label, members }) => (
+                      <div
+                        key={label}
+                        className="group relative rounded-md bg-primary/5 p-2"
+                      >
+                        <p className="text-sm font-medium leading-tight">
+                          {label}
                         </p>
-
-                        {groups.length > 0 && (
-                          <div className="space-y-1.5">
-                            {groups.map(({ recipe, members }) => (
-                              <div
-                                key={recipe.id}
-                                className="group relative rounded-md bg-primary/5 p-2"
+                        <div className="mt-0.5 flex flex-wrap gap-1">
+                          {members.length === familyMembers.length ? (
+                            <span className="text-xs text-muted">Alle</span>
+                          ) : (
+                            members.map((m) => (
+                              <span
+                                key={m.forUser.id}
+                                className="inline-flex items-center rounded bg-card px-1 text-xs text-muted"
                               >
-                                <p className="text-sm font-medium leading-tight">
-                                  {recipe.name}
-                                </p>
-                                <div className="mt-0.5 flex flex-wrap gap-1">
-                                  {members.length ===
-                                  familyMembers.length ? (
-                                    <span className="text-xs text-muted">
-                                      Alle
-                                    </span>
-                                  ) : (
-                                    members.map((m) => (
-                                      <span
-                                        key={m.forUser.id}
-                                        className="inline-flex items-center rounded bg-card px-1 text-xs text-muted"
-                                      >
-                                        {m.forUser.displayName}
-                                        <button
-                                          onClick={() =>
-                                            removeEntry(
-                                              dateStr,
-                                              mealType,
-                                              m.forUser.id,
-                                            )
-                                          }
-                                          className="ml-0.5 hidden text-red-400 hover:text-red-600 group-hover:inline"
-                                          title="Entfernen"
-                                        >
-                                          &times;
-                                        </button>
-                                      </span>
-                                    ))
-                                  )}
-                                </div>
-                                {members.length ===
-                                  familyMembers.length && (
-                                  <button
-                                    onClick={() =>
-                                      members.forEach((m) =>
-                                        removeEntry(
-                                          dateStr,
-                                          mealType,
-                                          m.forUser.id,
-                                        ),
-                                      )
-                                    }
-                                    className="absolute right-1 top-1 hidden rounded-full p-0.5 text-muted hover:text-red-500 group-hover:block"
-                                    title="Alle entfernen"
-                                  >
-                                    <svg
-                                      width="14"
-                                      height="14"
-                                      viewBox="0 0 24 24"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      strokeWidth="2"
-                                    >
-                                      <path d="M18 6L6 18M6 6l12 12" />
-                                    </svg>
-                                  </button>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-
-                        {!allAssigned && (
+                                {m.forUser.displayName}
+                              </span>
+                            ))
+                          )}
+                        </div>
+                        {/* Edit and Delete buttons */}
+                        <div className="absolute right-1 top-1 hidden gap-1 group-hover:flex">
                           <button
                             onClick={() =>
-                              setPickerTarget({ date: dateStr, mealType })
+                              setPickerTarget({
+                                date: dateStr,
+                                editingEntry: members[0],
+                              })
                             }
-                            className={`flex w-full items-center justify-center rounded-md border border-dashed border-border p-2 text-xs text-muted transition-colors hover:border-primary hover:text-primary ${
-                              groups.length > 0 ? "mt-1.5" : ""
-                            }`}
+                            className="rounded-full p-0.5 text-muted hover:text-primary"
+                            title="Bearbeiten"
                           >
-                            + Gericht wählen
+                            <svg
+                              width="14"
+                              height="14"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                            >
+                              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                            </svg>
                           </button>
-                        )}
+                          <button
+                            onClick={() => {
+                              if (confirm("Eintrag wirklich löschen?")) {
+                                members.forEach((m) => removeEntry(m.id));
+                              }
+                            }}
+                            className="rounded-full p-0.5 text-muted hover:text-red-500"
+                            title="Löschen"
+                          >
+                            <svg
+                              width="14"
+                              height="14"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                            >
+                              <path d="M18 6L6 18M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
                       </div>
-                    );
-                  })}
-                </div>
+                    ))}
+                  </div>
+                )}
+
+                {!allAssigned && (
+                  <button
+                    onClick={() => setPickerTarget({ date: dateStr })}
+                    className={`flex w-full items-center justify-center rounded-md border border-dashed border-border p-2 text-xs text-muted transition-colors hover:border-primary hover:text-primary ${
+                      groups.length > 0 ? "mt-1.5" : ""
+                    }`}
+                  >
+                    + Gericht wählen
+                  </button>
+                )}
               </div>
             );
           })}
@@ -296,14 +296,23 @@ export function WeekPlanner() {
       {pickerTarget && (
         <RecipePicker
           familyMembers={familyMembers}
-          existingAssignments={getEntries(
-            pickerTarget.date,
-            pickerTarget.mealType,
-          ).map((e) => ({
-            forUserId: e.forUser.id,
-            recipeName: e.recipe.name,
-          }))}
-          onSelect={assignRecipe}
+          existingAssignments={
+            pickerTarget.editingEntry
+              ? []
+              : getEntries(pickerTarget.date).map((e) => ({
+                  forUserId: e.forUser.id,
+                  recipeName: getMealLabel(e),
+                }))
+          }
+          editingEntry={
+            pickerTarget.editingEntry
+              ? {
+                  recipeName: pickerTarget.editingEntry.recipe?.name,
+                  customMeal: pickerTarget.editingEntry.customMeal,
+                }
+              : undefined
+          }
+          onSelect={assignMeal}
           onClose={() => setPickerTarget(null)}
         />
       )}
