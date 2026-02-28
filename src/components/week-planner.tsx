@@ -29,6 +29,7 @@ type MealPlanEntry = {
 type PickerTarget = {
   date: string;
   editingEntry?: MealPlanEntry;
+  editingMembers?: MealPlanEntry[];
 } | null;
 
 export function WeekPlanner() {
@@ -88,19 +89,36 @@ export function WeekPlanner() {
   async function assignMeal(
     meal: { id?: string; name: string; customMeal?: string },
     forUserIds: string[],
+    options?: { date?: string; overwrite?: boolean },
   ) {
     if (!pickerTarget) return;
 
     if (pickerTarget.editingEntry) {
-      await fetch("/api/meal-plans", {
+      const res = await fetch("/api/meal-plans", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           id: pickerTarget.editingEntry.id,
           recipeId: meal.id || null,
           customMeal: meal.customMeal || null,
+          date: options?.date || null,
+          forUserIds: forUserIds.length > 0 ? forUserIds : null,
+          overwrite: options?.overwrite || false,
         }),
       });
+
+      if (!res.ok) {
+        const data = await res.json();
+        if (data.error === "conflict") {
+          const names = data.conflicts.map((c: { forUser: { displayName: string }; meal: string }) =>
+            `${c.forUser.displayName} (${c.meal})`
+          ).join(", ");
+          if (confirm(`An diesem Tag existieren bereits Einträge für: ${names}. Überschreiben?`)) {
+            return assignMeal(meal, forUserIds, { ...options, overwrite: true });
+          }
+          return;
+        }
+      }
     } else {
       await fetch("/api/meal-plans", {
         method: "POST",
@@ -234,6 +252,7 @@ export function WeekPlanner() {
                               setPickerTarget({
                                 date: dateStr,
                                 editingEntry: members[0],
+                                editingMembers: members,
                               })
                             }
                             className="rounded-full p-0.5 text-muted hover:text-primary"
@@ -309,6 +328,8 @@ export function WeekPlanner() {
               ? {
                   recipeName: pickerTarget.editingEntry.recipe?.name,
                   customMeal: pickerTarget.editingEntry.customMeal,
+                  date: pickerTarget.date,
+                  forUserIds: pickerTarget.editingMembers?.map((m) => m.forUser.id) || [],
                 }
               : undefined
           }

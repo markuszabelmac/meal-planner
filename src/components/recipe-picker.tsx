@@ -24,10 +24,13 @@ type Props = {
   editingEntry?: {
     recipeName?: string;
     customMeal?: string | null;
+    date?: string;
+    forUserIds?: string[];
   };
   onSelect: (
     meal: { id?: string; name: string; customMeal?: string },
     forUserIds: string[],
+    options?: { date?: string; overwrite?: boolean },
   ) => void;
   onClose: () => void;
 };
@@ -44,10 +47,15 @@ export function RecipePicker({
   const [loading, setLoading] = useState(true);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [customMeal, setCustomMeal] = useState(editingEntry?.customMeal || "");
-  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>(
+    editingEntry?.forUserIds || [],
+  );
+  const [editDate, setEditDate] = useState(editingEntry?.date || "");
   const [mode, setMode] = useState<"recipe" | "custom">(
     editingEntry?.customMeal ? "custom" : "recipe",
   );
+  // In edit mode: step 1 = choose meal, step 2 = choose users + date
+  const [editStep, setEditStep] = useState<"meal" | "details">("meal");
   const inputRef = useRef<HTMLInputElement>(null);
 
   const isEditing = !!editingEntry;
@@ -56,9 +64,17 @@ export function RecipePicker({
     (m) => !assignedUserIds.has(m.id),
   );
 
+  // The meal that was chosen (recipe or custom text)
+  const [chosenMeal, setChosenMeal] = useState<{
+    id?: string;
+    name: string;
+    customMeal?: string;
+  } | null>(null);
+
   useEffect(() => {
-    if (!selectedRecipe && mode === "recipe") inputRef.current?.focus();
-  }, [selectedRecipe, mode]);
+    if (!selectedRecipe && mode === "recipe" && editStep === "meal")
+      inputRef.current?.focus();
+  }, [selectedRecipe, mode, editStep]);
 
   useEffect(() => {
     setLoading(true);
@@ -81,44 +97,52 @@ export function RecipePicker({
     );
   }
 
-  function selectAllUnassigned() {
-    const unassignedIds = unassignedMembers.map((m) => m.id);
-    const allSelected = unassignedIds.every((id) =>
-      selectedUserIds.includes(id),
-    );
+  function selectAllMembers() {
+    const allIds = isEditing
+      ? familyMembers.map((m) => m.id)
+      : unassignedMembers.map((m) => m.id);
+    const allSelected = allIds.every((id) => selectedUserIds.includes(id));
     if (allSelected) {
       setSelectedUserIds((prev) =>
-        prev.filter((id) => !unassignedIds.includes(id)),
+        prev.filter((id) => !allIds.includes(id)),
       );
     } else {
-      setSelectedUserIds((prev) => [
-        ...new Set([...prev, ...unassignedIds]),
-      ]);
+      setSelectedUserIds((prev) => [...new Set([...prev, ...allIds])]);
     }
   }
 
-  function handleConfirmRecipe() {
-    if (selectedRecipe && selectedUserIds.length > 0) {
-      onSelect(selectedRecipe, selectedUserIds);
-    }
-  }
+  function handleConfirm() {
+    const meal = chosenMeal || (selectedRecipe ? selectedRecipe : null);
+    if (!meal) return;
+    if (selectedUserIds.length === 0) return;
 
-  function handleConfirmCustom() {
-    if (customMeal.trim()) {
-      if (isEditing) {
-        onSelect({ name: customMeal.trim(), customMeal: customMeal.trim() }, []);
-      } else if (selectedUserIds.length > 0) {
-        onSelect({ name: customMeal.trim(), customMeal: customMeal.trim() }, selectedUserIds);
-      }
-    }
-  }
-
-  function handleSelectRecipeForEdit(recipe: Recipe) {
     if (isEditing) {
-      onSelect(recipe, []);
+      onSelect(meal, selectedUserIds, { date: editDate || undefined });
+    } else {
+      onSelect(meal, selectedUserIds);
+    }
+  }
+
+  function handleSelectRecipe(recipe: Recipe) {
+    if (isEditing) {
+      setChosenMeal(recipe);
+      setEditStep("details");
       return;
     }
     setSelectedRecipe(recipe);
+    setSelectedUserIds(unassignedMembers.map((m) => m.id));
+  }
+
+  function handleCustomMealNext() {
+    if (!customMeal.trim()) return;
+    const meal = { name: customMeal.trim(), customMeal: customMeal.trim() };
+    if (isEditing) {
+      setChosenMeal(meal);
+      setEditStep("details");
+      return;
+    }
+    // For new entries, go to user selection
+    setChosenMeal(meal);
     setSelectedUserIds(unassignedMembers.map((m) => m.id));
   }
 
@@ -126,7 +150,17 @@ export function RecipePicker({
     return existingAssignments.find((a) => a.forUserId === userId)?.recipeName;
   }
 
-  const showUserSelection = !isEditing && (selectedRecipe || (mode === "custom" && customMeal.trim()));
+  // Determine which screen to show
+  const showUserSelection =
+    (isEditing && editStep === "details") ||
+    (!isEditing && (selectedRecipe || chosenMeal));
+
+  const selectableMembers = isEditing ? familyMembers : familyMembers;
+  const selectAllLabel = isEditing
+    ? "Alle"
+    : assignedUserIds.size > 0
+      ? "Alle ohne Gericht"
+      : "Alle";
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
@@ -136,18 +170,26 @@ export function RecipePicker({
         <div className="mb-3 flex items-center justify-between">
           <h3 className="font-semibold">
             {showUserSelection
-              ? "Für wen?"
-              : isEditing
+              ? isEditing
                 ? "Eintrag bearbeiten"
+                : "Für wen?"
+              : isEditing
+                ? "Gericht ändern"
                 : "Gericht wählen"}
           </h3>
           <button
             onClick={
-              showUserSelection
+              showUserSelection && !isEditing
                 ? () => {
                     setSelectedRecipe(null);
+                    setChosenMeal(null);
                   }
-                : onClose
+                : showUserSelection && isEditing
+                  ? () => {
+                      setEditStep("meal");
+                      setChosenMeal(null);
+                    }
+                  : onClose
             }
             className="rounded-full p-1 text-muted hover:bg-background hover:text-foreground"
           >
@@ -179,25 +221,37 @@ export function RecipePicker({
 
         {showUserSelection ? (
           <>
+            {/* Selected meal summary */}
             <div className="mb-3 rounded-lg bg-primary/5 p-3">
               <p className="text-sm font-medium">
-                {selectedRecipe ? selectedRecipe.name : customMeal}
+                {chosenMeal?.name || selectedRecipe?.name || editingEntry?.recipeName || editingEntry?.customMeal}
               </p>
-              {selectedRecipe?.category && (
-                <span className="text-xs text-muted">
-                  {selectedRecipe.category}
-                </span>
-              )}
             </div>
 
+            {/* Date picker (edit mode only) */}
+            {isEditing && (
+              <div className="mb-3">
+                <label className="mb-1 block text-xs font-medium text-muted">
+                  Datum
+                </label>
+                <input
+                  type="date"
+                  value={editDate}
+                  onChange={(e) => setEditDate(e.target.value)}
+                  className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                />
+              </div>
+            )}
+
+            {/* User selection */}
             <div className="space-y-2">
-              {unassignedMembers.length > 1 && (
+              {selectableMembers.length > 1 && (
                 <>
                   <button
-                    onClick={selectAllUnassigned}
+                    onClick={selectAllMembers}
                     className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors ${
-                      unassignedMembers.every((m) =>
-                        selectedUserIds.includes(m.id),
+                      (isEditing ? familyMembers : unassignedMembers).every(
+                        (m) => selectedUserIds.includes(m.id),
                       )
                         ? "bg-primary/10"
                         : "hover:bg-background"
@@ -205,22 +259,18 @@ export function RecipePicker({
                   >
                     <span
                       className={`flex h-5 w-5 items-center justify-center rounded border text-xs ${
-                        unassignedMembers.every((m) =>
-                          selectedUserIds.includes(m.id),
+                        (isEditing ? familyMembers : unassignedMembers).every(
+                          (m) => selectedUserIds.includes(m.id),
                         )
                           ? "border-primary bg-primary text-white"
                           : "border-border"
                       }`}
                     >
-                      {unassignedMembers.every((m) =>
-                        selectedUserIds.includes(m.id),
+                      {(isEditing ? familyMembers : unassignedMembers).every(
+                        (m) => selectedUserIds.includes(m.id),
                       ) && "✓"}
                     </span>
-                    <span className="text-sm font-medium">
-                      {assignedUserIds.size > 0
-                        ? "Alle ohne Gericht"
-                        : "Alle"}
-                    </span>
+                    <span className="text-sm font-medium">{selectAllLabel}</span>
                   </button>
                   <div className="border-t border-border" />
                 </>
@@ -261,17 +311,19 @@ export function RecipePicker({
             </div>
 
             <button
-              onClick={selectedRecipe ? handleConfirmRecipe : handleConfirmCustom}
+              onClick={handleConfirm}
               disabled={selectedUserIds.length === 0}
               className="mt-4 w-full rounded-lg bg-primary py-2.5 font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-50"
             >
               {selectedUserIds.length === 0
                 ? "Bitte auswählen"
-                : selectedUserIds.some((id) => assignedUserIds.has(id))
-                  ? `Eintragen (${selectedUserIds.filter((id) => assignedUserIds.has(id)).length}x ersetzen)`
-                  : selectedUserIds.length === familyMembers.length
-                    ? "Für alle eintragen"
-                    : `Für ${selectedUserIds.length} Person${selectedUserIds.length > 1 ? "en" : ""} eintragen`}
+                : isEditing
+                  ? "Speichern"
+                  : selectedUserIds.some((id) => assignedUserIds.has(id))
+                    ? `Eintragen (${selectedUserIds.filter((id) => assignedUserIds.has(id)).length}x ersetzen)`
+                    : selectedUserIds.length === familyMembers.length
+                      ? "Für alle eintragen"
+                      : `Für ${selectedUserIds.length} Person${selectedUserIds.length > 1 ? "en" : ""} eintragen`}
             </button>
           </>
         ) : (
@@ -327,7 +379,7 @@ export function RecipePicker({
                       {recipes.map((recipe) => (
                         <button
                           key={recipe.id}
-                          onClick={() => handleSelectRecipeForEdit(recipe)}
+                          onClick={() => handleSelectRecipe(recipe)}
                           className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-background"
                         >
                           <span className="flex-1 text-sm font-medium">
@@ -355,27 +407,18 @@ export function RecipePicker({
                   autoFocus
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && customMeal.trim()) {
-                      if (isEditing) {
-                        handleConfirmCustom();
-                      }
+                      handleCustomMealNext();
                     }
                   }}
                 />
 
-                {isEditing ? (
+                {customMeal.trim() && (
                   <button
-                    onClick={handleConfirmCustom}
-                    disabled={!customMeal.trim()}
-                    className="w-full rounded-lg bg-primary py-2.5 font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-50"
+                    onClick={handleCustomMealNext}
+                    className="w-full rounded-lg bg-primary py-2.5 font-medium text-white transition-colors hover:bg-primary-hover"
                   >
-                    Speichern
+                    Weiter
                   </button>
-                ) : (
-                  customMeal.trim() && (
-                    <p className="text-center text-xs text-muted">
-                      Weiter zur Personenauswahl...
-                    </p>
-                  )
                 )}
               </>
             )}

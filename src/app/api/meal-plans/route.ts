@@ -94,14 +94,14 @@ export async function POST(request: Request) {
   return NextResponse.json(results, { status: 201 });
 }
 
-// PUT /api/meal-plans — update an existing entry
+// PUT /api/meal-plans — update an existing entry (meal, date, persons)
 export async function PUT(request: Request) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Nicht angemeldet" }, { status: 401 });
   }
 
-  const { id, recipeId, customMeal } = await request.json();
+  const { id, recipeId, customMeal, date, forUserIds, overwrite } = await request.json();
 
   if (!id) {
     return NextResponse.json({ error: "id erforderlich" }, { status: 400 });
@@ -114,21 +114,83 @@ export async function PUT(request: Request) {
     );
   }
 
-  const updated = await prisma.mealPlan.update({
-    where: { id },
-    data: {
-      recipeId: recipeId || null,
-      customMeal: customMeal || null,
-      assignedBy: session.user!.id!,
+  const existing = await prisma.mealPlan.findUnique({ where: { id } });
+  if (!existing) {
+    return NextResponse.json({ error: "Eintrag nicht gefunden" }, { status: 404 });
+  }
+
+  const targetDate = date ? new Date(date) : existing.date;
+  const targetUserIds: string[] = forUserIds?.length ? forUserIds : [existing.forUserId];
+
+  // Check for conflicts at the target date for the target users
+  const conflicts = await prisma.mealPlan.findMany({
+    where: {
+      date: targetDate,
+      forUserId: { in: targetUserIds },
+      id: { not: id },
     },
     include: {
-      recipe: { select: { id: true, name: true, category: true } },
       forUser: { select: { id: true, displayName: true } },
-      assigner: { select: { displayName: true } },
+      recipe: { select: { name: true } },
     },
   });
 
-  return NextResponse.json(updated);
+  if (conflicts.length > 0 && !overwrite) {
+    return NextResponse.json(
+      {
+        error: "conflict",
+        conflicts: conflicts.map((c) => ({
+          id: c.id,
+          forUser: c.forUser,
+          meal: c.recipe?.name ?? c.customMeal,
+        })),
+      },
+      { status: 409 },
+    );
+  }
+
+  // Delete conflicts if overwriting
+  if (conflicts.length > 0) {
+    await prisma.mealPlan.deleteMany({
+      where: { id: { in: conflicts.map((c) => c.id) } },
+    });
+  }
+
+  // Delete the original entry (we'll recreate for all target users)
+  await prisma.mealPlan.delete({ where: { id } });
+
+  // Create entries for all target users
+  const results = await Promise.all(
+    targetUserIds.map((forUserId) =>
+      prisma.mealPlan.upsert({
+        where: {
+          date_forUserId: {
+            date: targetDate,
+            forUserId,
+          },
+        },
+        update: {
+          recipeId: recipeId || null,
+          customMeal: customMeal || null,
+          assignedBy: session.user!.id!,
+        },
+        create: {
+          date: targetDate,
+          recipeId: recipeId || null,
+          customMeal: customMeal || null,
+          forUserId,
+          assignedBy: session.user!.id!,
+        },
+        include: {
+          recipe: { select: { id: true, name: true, category: true } },
+          forUser: { select: { id: true, displayName: true } },
+          assigner: { select: { displayName: true } },
+        },
+      }),
+    ),
+  );
+
+  return NextResponse.json(results);
 }
 
 // DELETE /api/meal-plans?id=xxx
