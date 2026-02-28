@@ -22,11 +22,13 @@ type Props = {
   familyMembers: FamilyMember[];
   existingAssignments: ExistingAssignment[];
   editingEntry?: {
+    recipeId?: string;
     recipeName?: string;
     customMeal?: string | null;
     date?: string;
     forUserIds?: string[];
   };
+  editPersonsOnly?: boolean;
   onSelect: (
     meal: { id?: string; name: string; customMeal?: string },
     forUserIds: string[],
@@ -39,6 +41,7 @@ export function RecipePicker({
   familyMembers,
   existingAssignments,
   editingEntry,
+  editPersonsOnly,
   onSelect,
   onClose,
 }: Props) {
@@ -55,7 +58,9 @@ export function RecipePicker({
     editingEntry?.customMeal ? "custom" : "recipe",
   );
   // In edit mode: step 1 = choose meal, step 2 = choose users + date
-  const [editStep, setEditStep] = useState<"meal" | "details">("meal");
+  const [editStep, setEditStep] = useState<"meal" | "details">(
+    editPersonsOnly ? "details" : "meal",
+  );
   const inputRef = useRef<HTMLInputElement>(null);
 
   const isEditing = !!editingEntry;
@@ -69,7 +74,15 @@ export function RecipePicker({
     id?: string;
     name: string;
     customMeal?: string;
-  } | null>(null);
+  } | null>(
+    editPersonsOnly && editingEntry
+      ? editingEntry.customMeal
+        ? { name: editingEntry.customMeal, customMeal: editingEntry.customMeal }
+        : editingEntry.recipeName
+          ? { id: editingEntry.recipeId, name: editingEntry.recipeName }
+          : null
+      : null,
+  );
 
   useEffect(() => {
     if (!selectedRecipe && mode === "recipe" && editStep === "meal")
@@ -170,9 +183,11 @@ export function RecipePicker({
         <div className="mb-3 flex items-center justify-between">
           <h3 className="font-semibold">
             {showUserSelection
-              ? isEditing
-                ? "Eintrag bearbeiten"
-                : "Für wen?"
+              ? editPersonsOnly
+                ? "Personen ändern"
+                : isEditing
+                  ? "Eintrag bearbeiten"
+                  : "Für wen?"
               : isEditing
                 ? "Gericht ändern"
                 : "Gericht wählen"}
@@ -184,7 +199,7 @@ export function RecipePicker({
                     setSelectedRecipe(null);
                     setChosenMeal(null);
                   }
-                : showUserSelection && isEditing
+                : showUserSelection && isEditing && !editPersonsOnly
                   ? () => {
                       setEditStep("meal");
                       setChosenMeal(null);
@@ -193,7 +208,7 @@ export function RecipePicker({
             }
             className="rounded-full p-1 text-muted hover:bg-background hover:text-foreground"
           >
-            {showUserSelection ? (
+            {showUserSelection && !editPersonsOnly ? (
               <svg
                 width="20"
                 height="20"
