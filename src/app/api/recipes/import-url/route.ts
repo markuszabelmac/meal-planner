@@ -94,6 +94,7 @@ Regeln:
         servings: recipeData.servings || 4,
         category: recipeData.category || null,
         tags: recipeData.tags || [],
+        sourceUrl: url,
         createdBy: session.user.id,
       },
     });
