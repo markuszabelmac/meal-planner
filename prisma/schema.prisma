@@ -24,20 +24,22 @@ model User {
 }
 
 model Recipe {
-  id          String     @id @default(cuid())
-  name        String
-  description String?
-  ingredients String?
-  prepTime    Int?       @map("prep_time")
-  servings    Int?
-  category    String?
-  tags        String[]   @default([])
-  sourceUrl   String?    @map("source_url")
-  createdBy   String     @map("created_by")
-  createdAt   DateTime   @default(now()) @map("created_at")
-  updatedAt   DateTime   @updatedAt @map("updated_at")
-  creator     User       @relation(fields: [createdBy], references: [id])
-  mealPlans   MealPlan[]
+  id           String     @id @default(cuid())
+  name         String
+  description  String?
+  ingredients  String?
+  instructions String?
+  imageUrl     String?    @map("image_url")
+  prepTime     Int?       @map("prep_time")
+  servings     Int?
+  category     String?
+  tags         String[]   @default([])
+  sourceUrl    String?    @map("source_url")
+  createdBy    String     @map("created_by")
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+  creator      User       @relation(fields: [createdBy], references: [id])
+  mealPlans    MealPlan[]
 
   @@map("recipes")
 }

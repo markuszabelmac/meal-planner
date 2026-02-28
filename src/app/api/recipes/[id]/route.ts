@@ -40,7 +40,7 @@ export async function PUT(
 
   const { id } = await params;
   const body = await request.json();
-  const { name, description, ingredients, prepTime, servings, category, tags } =
+  const { name, description, ingredients, instructions, imageUrl, prepTime, servings, category, tags } =
     body;
 
   if (!name?.trim()) {
@@ -56,6 +56,8 @@ export async function PUT(
       name: name.trim(),
       description: description?.trim() || null,
       ingredients: ingredients?.trim() || null,
+      instructions: instructions?.trim() || null,
+      imageUrl: imageUrl?.trim() || null,
       prepTime: prepTime ? parseInt(prepTime) : null,
       servings: servings ? parseInt(servings) : null,
       category: category?.trim() || null,

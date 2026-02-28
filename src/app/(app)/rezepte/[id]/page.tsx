@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { DeleteRecipeButton } from "@/components/delete-recipe-button";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 
@@ -42,6 +43,20 @@ export default async function RecipeDetailPage({
           <DeleteRecipeButton id={recipe.id} />
         </div>
       </div>
+
+      {/* Image */}
+      {recipe.imageUrl && (
+        <div className="relative mb-6 aspect-video w-full overflow-hidden rounded-lg">
+          <Image
+            src={recipe.imageUrl}
+            alt={recipe.name}
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, 672px"
+            unoptimized
+          />
+        </div>
+      )}
 
       {/* Meta info */}
       <div className="mb-6 flex flex-wrap gap-3">
@@ -116,6 +131,18 @@ export default async function RecipeDetailPage({
                 .map((s) => s.trim())
                 .filter(Boolean)
                 .join(", ")}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Instructions */}
+      {recipe.instructions && (
+        <div className="mb-6">
+          <h3 className="mb-2 font-semibold">Zubereitung</h3>
+          <div className="rounded-lg border border-border bg-card p-4">
+            <p className="whitespace-pre-line text-sm leading-relaxed">
+              {recipe.instructions}
             </p>
           </div>
         </div>

@@ -38,6 +38,20 @@ export async function POST(request: Request) {
 
     const html = await res.text();
 
+    // Try to extract image URL from meta tags before stripping HTML
+    let imageUrl: string | null = null;
+    const ogImageMatch = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)
+      || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
+    if (ogImageMatch) {
+      imageUrl = ogImageMatch[1];
+    } else {
+      // Try schema.org image
+      const schemaImageMatch = html.match(/"image"\s*:\s*"([^"]+)"/);
+      if (schemaImageMatch) {
+        imageUrl = schemaImageMatch[1];
+      }
+    }
+
     // Extract text content (strip HTML tags)
     const textContent = html
       .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
@@ -45,7 +59,7 @@ export async function POST(request: Request) {
       .replace(/<[^>]+>/g, " ")
       .replace(/\s+/g, " ")
       .trim()
-      .slice(0, 5000); // Limit to 5000 chars for AI
+      .slice(0, 8000); // Limit to 8000 chars for AI (increased for instructions)
 
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -60,6 +74,7 @@ Das JSON muss genau dieses Format haben:
   "name": "Rezeptname",
   "description": "Kurze Beschreibung in 1-2 Sätzen",
   "ingredients": "Zutat 1, Zutat 2, Zutat 3",
+  "instructions": "Schritt 1: ...\nSchritt 2: ...\nSchritt 3: ...",
   "prepTime": 30,
   "servings": 4,
   "category": "Kategorie",
@@ -69,6 +84,7 @@ Das JSON muss genau dieses Format haben:
 Regeln:
 - Antworte NUR mit dem JSON, kein anderer Text
 - Zutaten als kommagetrennte Liste
+- instructions: Die vollständige Zubereitungsanleitung als nummerierten Text, Schritte durch Zeilenumbrüche (\\n) getrennt
 - Verwende für die Kategorie eine von: Pasta, Fleisch, Fisch, Vegetarisch, Vegan, Suppe, Salat, Auflauf, Asiatisch, Schnell & Einfach
 - Falls die Zubereitungszeit nicht genannt wird, schätze sie
 - Portionen standardmäßig auf 4`,
@@ -79,7 +95,7 @@ Regeln:
         },
       ],
       response_format: { type: "json_object" },
-      max_tokens: 1000,
+      max_tokens: 2000,
     });
 
     const jsonText = response.choices[0]?.message?.content ?? "{}";
@@ -90,6 +106,8 @@ Regeln:
         name: recipeData.name,
         description: recipeData.description || null,
         ingredients: recipeData.ingredients || null,
+        instructions: recipeData.instructions || null,
+        imageUrl: imageUrl || null,
         prepTime: recipeData.prepTime || null,
         servings: recipeData.servings || 4,
         category: recipeData.category || null,

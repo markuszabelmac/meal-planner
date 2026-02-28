@@ -21,6 +21,8 @@ type RecipeData = {
   name: string;
   description: string;
   ingredients: string;
+  instructions: string;
+  imageUrl: string;
   prepTime: string;
   servings: string;
   category: string;
@@ -35,6 +37,8 @@ export function RecipeForm({ initial }: { initial?: RecipeData }) {
   const [name, setName] = useState(initial?.name || "");
   const [description, setDescription] = useState(initial?.description || "");
   const [ingredients, setIngredients] = useState(initial?.ingredients || "");
+  const [instructions, setInstructions] = useState(initial?.instructions || "");
+  const [imageUrl, setImageUrl] = useState(initial?.imageUrl || "");
   const [prepTime, setPrepTime] = useState(initial?.prepTime || "");
   const [servings, setServings] = useState(initial?.servings || "");
   const [category, setCategory] = useState(initial?.category || "");
@@ -70,6 +74,8 @@ export function RecipeForm({ initial }: { initial?: RecipeData }) {
         name,
         description,
         ingredients,
+        instructions,
+        imageUrl,
         prepTime,
         servings,
         category,
@@ -146,6 +152,39 @@ export function RecipeForm({ initial }: { initial?: RecipeData }) {
           onChange={(e) => setIngredients(e.target.value)}
           rows={5}
           placeholder={"500g Spaghetti\n400g Hackfleisch\n2 Dosen Tomaten\n..."}
+          className="w-full rounded-lg border border-border px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+        />
+      </div>
+
+      {/* Instructions */}
+      <div>
+        <label
+          htmlFor="instructions"
+          className="mb-1 block text-sm font-medium"
+        >
+          Zubereitung
+        </label>
+        <textarea
+          id="instructions"
+          value={instructions}
+          onChange={(e) => setInstructions(e.target.value)}
+          rows={8}
+          placeholder={"Schritt 1: Wasser aufkochen\nSchritt 2: Nudeln hinzugeben\n..."}
+          className="w-full rounded-lg border border-border px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+        />
+      </div>
+
+      {/* Image URL */}
+      <div>
+        <label htmlFor="imageUrl" className="mb-1 block text-sm font-medium">
+          Bild-URL
+        </label>
+        <input
+          id="imageUrl"
+          type="url"
+          value={imageUrl}
+          onChange={(e) => setImageUrl(e.target.value)}
+          placeholder="https://example.com/bild.jpg"
           className="w-full rounded-lg border border-border px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
         />
       </div>

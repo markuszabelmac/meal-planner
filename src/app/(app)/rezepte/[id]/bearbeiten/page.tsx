@@ -29,6 +29,8 @@ export default async function EditRecipePage({
           name: recipe.name,
           description: recipe.description || "",
           ingredients: recipe.ingredients || "",
+          instructions: recipe.instructions || "",
+          imageUrl: recipe.imageUrl || "",
           prepTime: recipe.prepTime?.toString() || "",
           servings: recipe.servings?.toString() || "",
           category: recipe.category || "",
