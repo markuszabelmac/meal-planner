@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { RecipePicker } from "./recipe-picker";
 import {
   getWeekDays,
@@ -39,6 +39,7 @@ export function WeekPlanner() {
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [pickerTarget, setPickerTarget] = useState<PickerTarget>(null);
+  const todayRef = useRef<HTMLDivElement>(null);
 
   const weekDays = getWeekDays(currentDate);
   const from = toDateString(weekDays[0]);
@@ -65,6 +66,12 @@ export function WeekPlanner() {
     const interval = setInterval(fetchPlans, 30000);
     return () => clearInterval(interval);
   }, [fetchPlans]);
+
+  useEffect(() => {
+    if (!loading && todayRef.current) {
+      todayRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [loading]);
 
   function navigateWeek(offset: number) {
     setCurrentDate((prev) => {
@@ -167,7 +174,7 @@ export function WeekPlanner() {
       <div className="mb-4 flex items-center justify-between">
         <button
           onClick={() => navigateWeek(-1)}
-          className="rounded-lg border border-border px-3 py-1.5 text-sm hover:bg-background"
+          className="rounded-lg border border-border p-3 text-sm hover:bg-background"
         >
           &larr;
         </button>
@@ -181,7 +188,7 @@ export function WeekPlanner() {
         </div>
         <button
           onClick={() => navigateWeek(1)}
-          className="rounded-lg border border-border px-3 py-1.5 text-sm hover:bg-background"
+          className="rounded-lg border border-border p-3 text-sm hover:bg-background"
         >
           &rarr;
         </button>
@@ -203,6 +210,7 @@ export function WeekPlanner() {
             return (
               <div
                 key={dateStr}
+                ref={today ? todayRef : undefined}
                 className={`rounded-lg border bg-card p-3 ${
                   today
                     ? "border-primary/40 ring-1 ring-primary/20"
@@ -227,27 +235,29 @@ export function WeekPlanner() {
                     {groups.map(({ label, members }) => (
                       <div
                         key={label}
-                        className="group relative rounded-md bg-primary/5 p-2"
+                        className="flex items-start gap-2 rounded-md bg-primary/5 p-2"
                       >
-                        <p className="text-sm font-medium leading-tight">
-                          {label}
-                        </p>
-                        <div className="mt-0.5 flex flex-wrap gap-1">
-                          {members.length === familyMembers.length ? (
-                            <span className="text-xs text-muted">Alle</span>
-                          ) : (
-                            members.map((m) => (
-                              <span
-                                key={m.forUser.id}
-                                className="inline-flex items-center rounded bg-card px-1 text-xs text-muted"
-                              >
-                                {m.forUser.displayName}
-                              </span>
-                            ))
-                          )}
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium leading-tight">
+                            {label}
+                          </p>
+                          <div className="mt-0.5 flex flex-wrap gap-1">
+                            {members.length === familyMembers.length ? (
+                              <span className="text-xs text-muted">Alle</span>
+                            ) : (
+                              members.map((m) => (
+                                <span
+                                  key={m.forUser.id}
+                                  className="inline-flex items-center rounded bg-card px-1 text-xs text-muted"
+                                >
+                                  {m.forUser.displayName}
+                                </span>
+                              ))
+                            )}
+                          </div>
                         </div>
                         {/* Edit, Persons, and Delete buttons */}
-                        <div className="absolute right-1 top-1 hidden gap-1 group-hover:flex">
+                        <div className="flex shrink-0 items-center gap-0.5">
                           <button
                             onClick={() =>
                               setPickerTarget({
@@ -256,12 +266,12 @@ export function WeekPlanner() {
                                 editingMembers: members,
                               })
                             }
-                            className="rounded-full p-0.5 text-muted hover:text-primary"
+                            className="rounded-full p-1.5 text-muted hover:text-primary"
                             title="Gericht ändern"
                           >
                             <svg
-                              width="14"
-                              height="14"
+                              width="16"
+                              height="16"
                               viewBox="0 0 24 24"
                               fill="none"
                               stroke="currentColor"
@@ -280,12 +290,12 @@ export function WeekPlanner() {
                                 editPersonsOnly: true,
                               })
                             }
-                            className="rounded-full p-0.5 text-muted hover:text-primary"
+                            className="rounded-full p-1.5 text-muted hover:text-primary"
                             title="Personen ändern"
                           >
                             <svg
-                              width="14"
-                              height="14"
+                              width="16"
+                              height="16"
                               viewBox="0 0 24 24"
                               fill="none"
                               stroke="currentColor"
@@ -303,12 +313,12 @@ export function WeekPlanner() {
                                 members.forEach((m) => removeEntry(m.id));
                               }
                             }}
-                            className="rounded-full p-0.5 text-muted hover:text-red-500"
+                            className="rounded-full p-1.5 text-muted hover:text-red-500"
                             title="Löschen"
                           >
                             <svg
-                              width="14"
-                              height="14"
+                              width="16"
+                              height="16"
                               viewBox="0 0 24 24"
                               fill="none"
                               stroke="currentColor"
@@ -327,7 +337,7 @@ export function WeekPlanner() {
                 {!allAssigned && (
                   <button
                     onClick={() => setPickerTarget({ date: dateStr })}
-                    className={`flex w-full items-center justify-center rounded-md border border-dashed border-border p-2 text-xs text-muted transition-colors hover:border-primary hover:text-primary ${
+                    className={`flex w-full items-center justify-center rounded-md border border-dashed border-border p-3 text-sm text-muted transition-colors hover:border-primary hover:text-primary ${
                       groups.length > 0 ? "mt-1.5" : ""
                     }`}
                   >
