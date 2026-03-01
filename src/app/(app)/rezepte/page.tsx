@@ -62,7 +62,7 @@ export default function RecipesPage() {
       </div>
 
       {/* Search & Filter */}
-      <div className="mb-4 space-y-3">
+      <div className="sticky top-[49px] z-[5] -mx-4 mb-4 space-y-3 bg-background px-4 pb-3 pt-1">
         <input
           type="text"
           value={search}
@@ -75,7 +75,7 @@ export default function RecipesPage() {
           <div className="flex flex-wrap gap-1.5">
             <button
               onClick={() => setSelectedCategory("")}
-              className={`rounded-full px-3 py-1 text-xs transition-colors ${
+              className={`rounded-full px-3 py-1.5 text-xs transition-colors ${
                 !selectedCategory
                   ? "bg-primary text-white"
                   : "border border-border text-muted hover:border-primary hover:text-primary"
@@ -89,7 +89,7 @@ export default function RecipesPage() {
                 onClick={() =>
                   setSelectedCategory(cat === selectedCategory ? "" : cat)
                 }
-                className={`rounded-full px-3 py-1 text-xs transition-colors ${
+                className={`rounded-full px-3 py-1.5 text-xs transition-colors ${
                   cat === selectedCategory
                     ? "bg-primary text-white"
                     : "border border-border text-muted hover:border-primary hover:text-primary"
