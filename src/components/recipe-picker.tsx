@@ -86,7 +86,7 @@ export function RecipePicker({
 
   useEffect(() => {
     if (!selectedRecipe && mode === "recipe" && editStep === "meal")
-      inputRef.current?.focus();
+      inputRef.current?.focus({ preventScroll: true });
   }, [selectedRecipe, mode, editStep]);
 
   useEffect(() => {
