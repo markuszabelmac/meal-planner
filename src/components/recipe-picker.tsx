@@ -378,7 +378,7 @@ export function RecipePicker({
                   className="mb-3 w-full rounded-lg border border-border px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                 />
 
-                <div className="max-h-64 overflow-y-auto">
+                <div className="max-h-[60vh] overflow-y-auto">
                   {loading ? (
                     <p className="py-4 text-center text-sm text-muted">
                       Lade...
