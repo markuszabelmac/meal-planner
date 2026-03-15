@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Nährstoffe
 status: planning
-stopped_at: Completed 06-02-PLAN.md
-last_updated: "2026-03-15T17:27:04.650Z"
+stopped_at: Completed 07-01-PLAN.md
+last_updated: "2026-03-15T19:33:03.985Z"
 last_activity: 2026-03-15 — Roadmap created for milestone v1.1 Nährstoffe (phases 6-10)
 progress:
   total_phases: 10
   completed_phases: 1
-  total_plans: 3
-  completed_plans: 3
+  total_plans: 5
+  completed_plans: 4
   percent: 50
 ---
 
@@ -46,6 +46,7 @@ Progress: [██████░░░░] 50% (v1.0 complete; v1.1 not started)
 | v1.0 (1-5) | — | — | — |
 | Phase 06-schema-data-foundation P06-01 | 22 | 2 tasks | 5 files |
 | Phase 06-schema-data-foundation P02 | 65 | 2 tasks | 4 files |
+| Phase 07-ingredient-admin-ui P01 | 3 | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -63,6 +64,8 @@ Progress: [██████░░░░] 50% (v1.0 complete; v1.1 not started)
 - [Phase 06-schema-data-foundation]: mealType is explicit 3rd arg to onSelect/assignMeal (not folded into options) for type-safety and clarity
 - [Phase 06-schema-data-foundation]: Use npx tsx instead of node --experimental-transform-types for seed runner — ESM module resolution in Node.js 25 cannot resolve .ts imports within generated Prisma client
 - [Phase 06-schema-data-foundation]: Seed script uses English name fallback (not skip) when AI translation fails — ensures all items seeded with nameEn still searchable
+- [Phase 07-ingredient-admin-ui]: Prisma import path is @/generated/prisma/client not root directory — matches existing meal-plans/route.ts pattern
+- [Phase 07-ingredient-admin-ui]: DELETE /api/ingredients/[id] returns detachedRecipes count so callers can warn if recipes lose structured ingredient link
 
 ### Pending Todos
 
@@ -76,6 +79,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-15T17:27:04.649Z
-Stopped at: Completed 06-02-PLAN.md
+Last session: 2026-03-15T19:33:03.983Z
+Stopped at: Completed 07-01-PLAN.md
 Resume file: None

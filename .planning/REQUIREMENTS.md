@@ -54,7 +54,7 @@ Requirements für Milestone v1.1: Nährstoffe.
 - [ ] **VIEW-02**: "Meine Nährwerte" zeigt Tagesansicht mit Aufschlüsselung pro Mahlzeit
 - [ ] **VIEW-03**: "Meine Nährwerte" zeigt Wochenansicht mit Tageswerten + Durchschnitt
 - [ ] **VIEW-04**: Wochen-Navigation vor/zurück für Nährwert-Historie
-- [ ] **VIEW-05**: Zutatenverwaltung: User kann Zutaten suchen, hinzufügen, bearbeiten, löschen
+- [x] **VIEW-05**: Zutatenverwaltung: User kann Zutaten suchen, hinzufügen, bearbeiten, löschen
 
 ## v2 Requirements
 
@@ -90,7 +90,7 @@ Deferred to future release.
 | VIEW-02 | Phase 10 | Pending |
 | VIEW-03 | Phase 10 | Pending |
 | VIEW-04 | Phase 10 | Pending |
-| VIEW-05 | Phase 7 | Pending |
+| VIEW-05 | Phase 7 | Complete |
 
 **Coverage:**
 - v1.1 requirements: 15 total

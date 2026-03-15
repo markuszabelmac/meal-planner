@@ -108,7 +108,7 @@ Plans:
   2. User can create a new ingredient with name, unit, and nutrition values per 100g
   3. User can edit an existing ingredient's name, aliases, and nutrition values
   4. User can delete an ingredient (with safe handling if it is linked to recipes)
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 
 Plans:
 - [ ] 07-01-PLAN.md — Ingredient CRUD API routes + shared components (form, delete button, nav icon)
@@ -157,7 +157,7 @@ Plans:
 | 4. KI-Inspiration | v1.0 | — | Complete | — |
 | 5. Polish & Deploy | v1.0 | — | Complete | — |
 | 6. Schema & Data Foundation | 3/3 | Complete   | 2026-03-15 | - |
-| 7. Ingredient Admin UI | v1.1 | 0/2 | Planned | - |
+| 7. Ingredient Admin UI | 1/2 | In Progress|  | - |
 | 8. Structured Ingredient Entry & Nutrition Display | v1.1 | 0/? | Not started | - |
 | 9. AI Matching & Estimation | v1.1 | 0/? | Not started | - |
 | 10. Nutrition History | v1.1 | 0/? | Not started | - |
