@@ -38,9 +38,21 @@ Jede Woche die gleiche Frage: "Was essen wir?" — fehlende Übersicht, vergesse
 - **Online-only** — kein Offline-Modus, vereinfacht die Architektur
 - **Code & Kommentare auf Englisch** — Best Practice für Codebase
 
+## Current Milestone: v1.1 Nährstoffe
+
+**Goal:** Strukturierte Zutaten mit Nährwertdatenbank, Nährstoffberechnung pro Rezept, persönliche Nährwert-Historie.
+
+**Target features:**
+- Zutatendatenbank mit Nährwerten pro 100g (initial befüllt aus USDA)
+- Strukturierte Zutaten pro Rezept mit Auto-Matching gegen DB
+- KI-Schätzung für Nährwerte bei unbekannten Zutaten
+- Nährstoffanzeige pro Portion auf Rezeptdetailseite
+- "Meine Nährwerte" — persönliche Tages-/Wochenansicht mit Historie
+- Zutatenverwaltung (hinzufügen, bearbeiten, löschen)
+
 ## Scope
 
-### Milestone 1: MVP
+### Milestone 1: MVP (shipped)
 - Authentifizierung (Login/Registrierung pro Familienmitglied)
 - Wochenplaner (Kalenderansicht, Gerichte zuweisen)
 - Rezept-Datenbank (CRUD, Suche, Kategorien)

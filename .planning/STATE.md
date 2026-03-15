@@ -1,15 +1,15 @@
 # Project State
 
-## Current Phase
-Phase 1: Projekt-Setup & Auth (not started)
+## Current Position
+
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-15 — Milestone v1.1 Nährstoffe started
 
 ## Progress
-- [x] Projekt initialisiert (.planning Dokumente)
-- [ ] Phase 1: Projekt-Setup & Auth
-- [ ] Phase 2: Rezept-Datenbank
-- [ ] Phase 3: Wochenplaner
-- [ ] Phase 4: KI-Inspiration
-- [ ] Phase 5: Polish & Deploy
+- [x] Milestone 1: MVP (shipped)
+- [ ] Milestone v1.1: Nährstoffe
 
 ## Quick Tasks Completed
 
