@@ -27,6 +27,7 @@ type FamilyMember = {
 type ExistingAssignment = {
   forUserId: string;
   recipeName: string;
+  mealType?: string;
 };
 
 type Props = {
@@ -82,7 +83,10 @@ export function RecipePicker({
   const inputRef = useRef<HTMLInputElement>(null);
 
   const isEditing = !!editingEntry;
-  const assignedUserIds = new Set(existingAssignments.map((a) => a.forUserId));
+  const filteredAssignments = existingAssignments.filter(
+    (a) => !a.mealType || a.mealType === selectedMealType,
+  );
+  const assignedUserIds = new Set(filteredAssignments.map((a) => a.forUserId));
   const unassignedMembers = familyMembers.filter(
     (m) => !assignedUserIds.has(m.id),
   );
