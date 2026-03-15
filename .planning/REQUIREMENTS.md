@@ -76,27 +76,27 @@ Deferred to future release.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DB-01 | — | Pending |
-| DB-02 | — | Pending |
-| DB-03 | — | Pending |
-| DB-04 | — | Pending |
-| DB-05 | — | Pending |
-| INPUT-01 | — | Pending |
-| INPUT-02 | — | Pending |
-| INPUT-03 | — | Pending |
-| INPUT-04 | — | Pending |
-| INPUT-05 | — | Pending |
-| VIEW-01 | — | Pending |
-| VIEW-02 | — | Pending |
-| VIEW-03 | — | Pending |
-| VIEW-04 | — | Pending |
-| VIEW-05 | — | Pending |
+| DB-01 | Phase 6 | Pending |
+| DB-02 | Phase 6 | Pending |
+| DB-03 | Phase 6 | Pending |
+| DB-04 | Phase 6 | Pending |
+| DB-05 | Phase 6 | Pending |
+| INPUT-01 | Phase 8 | Pending |
+| INPUT-02 | Phase 8 | Pending |
+| INPUT-03 | Phase 9 | Pending |
+| INPUT-04 | Phase 9 | Pending |
+| INPUT-05 | Phase 9 | Pending |
+| VIEW-01 | Phase 8 | Pending |
+| VIEW-02 | Phase 10 | Pending |
+| VIEW-03 | Phase 10 | Pending |
+| VIEW-04 | Phase 10 | Pending |
+| VIEW-05 | Phase 7 | Pending |
 
 **Coverage:**
 - v1.1 requirements: 15 total
-- Mapped to phases: 0
-- Unmapped: 15 ⚠️
+- Mapped to phases: 15
+- Unmapped: 0 ✓
 
 ---
-*Requirements defined: 2026-03-15*
-*Last updated: 2026-03-15 after milestone v1.1 definition*
+*Requirements defined: 2026-02-11*
+*Last updated: 2026-03-15 — Phase mappings added for v1.1 roadmap*
