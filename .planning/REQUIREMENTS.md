@@ -36,10 +36,10 @@
 Requirements für Milestone v1.1: Nährstoffe.
 
 ### Datenbank (DB)
-- [ ] **DB-01**: Ingredient-Tabelle mit Nährwerten pro 100g (Kalorien, Protein, Fett, ges. Fettsäuren, Kohlenhydrate, Zucker, Ballaststoffe)
-- [ ] **DB-02**: RecipeIngredient-Verknüpfung (Rezept → Zutat mit Menge + Einheit)
-- [ ] **DB-03**: MealPlan unterstützt 2 Mahlzeiten pro Tag pro User
-- [ ] **DB-04**: pg_trgm Extension + GIN-Index für Fuzzy-Matching
+- [x] **DB-01**: Ingredient-Tabelle mit Nährwerten pro 100g (Kalorien, Protein, Fett, ges. Fettsäuren, Kohlenhydrate, Zucker, Ballaststoffe)
+- [x] **DB-02**: RecipeIngredient-Verknüpfung (Rezept → Zutat mit Menge + Einheit)
+- [x] **DB-03**: MealPlan unterstützt 2 Mahlzeiten pro Tag pro User
+- [x] **DB-04**: pg_trgm Extension + GIN-Index für Fuzzy-Matching
 - [ ] **DB-05**: USDA Seed-Script mit deutschen Aliassen für gängige Zutaten
 
 ### Eingabe (INPUT)
@@ -76,10 +76,10 @@ Deferred to future release.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DB-01 | Phase 6 | Pending |
-| DB-02 | Phase 6 | Pending |
-| DB-03 | Phase 6 | Pending |
-| DB-04 | Phase 6 | Pending |
+| DB-01 | Phase 6 | Complete |
+| DB-02 | Phase 6 | Complete |
+| DB-03 | Phase 6 | Complete |
+| DB-04 | Phase 6 | Complete |
 | DB-05 | Phase 6 | Pending |
 | INPUT-01 | Phase 8 | Pending |
 | INPUT-02 | Phase 8 | Pending |

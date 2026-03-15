@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Nährstoffe
 status: planning
-stopped_at: Phase 6 context gathered
-last_updated: "2026-03-15T14:08:44.151Z"
+stopped_at: Completed 06-01-PLAN.md
+last_updated: "2026-03-15T15:59:10.873Z"
 last_activity: 2026-03-15 — Roadmap created for milestone v1.1 Nährstoffe (phases 6-10)
 progress:
   total_phases: 10
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 3
+  completed_plans: 1
   percent: 50
 ---
 
@@ -44,6 +44,7 @@ Progress: [██████░░░░] 50% (v1.0 complete; v1.1 not started)
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | v1.0 (1-5) | — | — | — |
+| Phase 06-schema-data-foundation P06-01 | 22 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -54,6 +55,9 @@ Progress: [██████░░░░] 50% (v1.0 complete; v1.1 not started)
 - **v1.1**: Import USDA SR Legacy only (~9,000 entries, not full 400k) to keep match quality high
 - **v1.1**: Add German name aliases to `Ingredient` to handle German-language ingredient text matching against English USDA names
 - **v1.1**: MealPlan unique constraint `@@unique([date, forUserId])` must be fixed in Phase 6 to allow 2 meals/day before history is built
+- [Phase 06-schema-data-foundation]: Migration adds meal_type as nullable, backfills existing rows to 'abend', then sets NOT NULL — avoids DEFAULT constraint issues with Prisma enum types on populated tables
+- [Phase 06-schema-data-foundation]: unitToGrams returns null for 'stueck' (not 0 or throws) — forces callers to implement AI-estimation fallback explicitly in Phase 9
+- [Phase 06-schema-data-foundation]: MealPlan API route defaults mealType to 'abend' when not specified — backward compatible with existing week planner UI
 
 ### Pending Todos
 
@@ -67,6 +71,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-15T14:08:44.143Z
-Stopped at: Phase 6 context gathered
-Resume file: .planning/phases/06-schema-data-foundation/06-CONTEXT.md
+Last session: 2026-03-15T15:59:10.871Z
+Stopped at: Completed 06-01-PLAN.md
+Resume file: None
