@@ -17,9 +17,12 @@ type FamilyMember = {
   displayName: string;
 };
 
+type MealType = "fruehstueck" | "mittag" | "abend" | "snacks";
+
 type MealPlanEntry = {
   id: string;
   date: string;
+  mealType: MealType;
   recipeId: string | null;
   customMeal: string | null;
   recipe: { id: string; name: string; category: string | null } | null;
@@ -27,8 +30,18 @@ type MealPlanEntry = {
   assigner: { displayName: string };
 };
 
+const MEAL_TYPE_LABELS: Record<MealType, string> = {
+  fruehstueck: "Frühstück",
+  mittag: "Mittag",
+  abend: "Abend",
+  snacks: "Snacks",
+};
+
+const MEAL_TYPE_ORDER: MealType[] = ["fruehstueck", "mittag", "abend", "snacks"];
+
 type PickerTarget = {
   date: string;
+  mealType: MealType;
   editingEntry?: MealPlanEntry;
   editingMembers?: MealPlanEntry[];
   editPersonsOnly?: boolean;
@@ -99,6 +112,7 @@ export function WeekPlanner() {
   async function assignMeal(
     meal: { id?: string; name: string; customMeal?: string },
     forUserIds: string[],
+    mealType: MealType,
     options?: { date?: string; overwrite?: boolean },
   ) {
     if (!pickerTarget) return;
@@ -113,6 +127,7 @@ export function WeekPlanner() {
           customMeal: meal.customMeal || null,
           date: options?.date || null,
           forUserIds: forUserIds.length > 0 ? forUserIds : null,
+          mealType,
           overwrite: options?.overwrite || false,
         }),
       });
@@ -124,7 +139,7 @@ export function WeekPlanner() {
             `${c.forUser.displayName} (${c.meal})`
           ).join(", ");
           if (confirm(`An diesem Tag existieren bereits Einträge für: ${names}. Überschreiben?`)) {
-            return assignMeal(meal, forUserIds, { ...options, overwrite: true });
+            return assignMeal(meal, forUserIds, mealType, { ...options, overwrite: true });
           }
           return;
         }
@@ -138,6 +153,7 @@ export function WeekPlanner() {
           recipeId: meal.id || null,
           customMeal: meal.customMeal || null,
           forUserIds,
+          mealType,
         }),
       });
     }
@@ -151,23 +167,32 @@ export function WeekPlanner() {
     fetchPlans();
   }
 
-  function groupEntries(entries: MealPlanEntry[]) {
-    const groups = new Map<
-      string,
-      { label: string; recipe: MealPlanEntry["recipe"]; members: MealPlanEntry[] }
-    >();
+  function groupEntriesByMealType(entries: MealPlanEntry[]) {
+    const byMealType = new Map<MealType, Map<string, { label: string; recipe: MealPlanEntry["recipe"]; members: MealPlanEntry[] }>>();
+
     for (const entry of entries) {
+      if (!byMealType.has(entry.mealType)) {
+        byMealType.set(entry.mealType, new Map());
+      }
+      const mealTypeGroup = byMealType.get(entry.mealType)!;
       const key = entry.recipe ? entry.recipe.id : `custom:${entry.customMeal}`;
-      if (!groups.has(key)) {
-        groups.set(key, {
+      if (!mealTypeGroup.has(key)) {
+        mealTypeGroup.set(key, {
           label: getMealLabel(entry),
           recipe: entry.recipe,
           members: [],
         });
       }
-      groups.get(key)!.members.push(entry);
+      mealTypeGroup.get(key)!.members.push(entry);
     }
-    return Array.from(groups.values());
+
+    // Return in consistent meal type order, only those with entries
+    return MEAL_TYPE_ORDER
+      .filter((mt) => byMealType.has(mt))
+      .map((mt) => ({
+        mealType: mt,
+        groups: Array.from(byMealType.get(mt)!.values()),
+      }));
   }
 
   return (
@@ -204,10 +229,7 @@ export function WeekPlanner() {
             const dateStr = toDateString(day);
             const today = isToday(day);
             const entries = getEntries(dateStr);
-            const groups = groupEntries(entries);
-            const allAssigned =
-              entries.length >= familyMembers.length &&
-              familyMembers.length > 0;
+            const mealTypeSections = groupEntriesByMealType(entries);
 
             return (
               <div
@@ -232,129 +254,138 @@ export function WeekPlanner() {
                   )}
                 </h3>
 
-                {groups.length > 0 && (
-                  <div className="space-y-1.5">
-                    {groups.map(({ label, recipe, members }) => (
-                      <div
-                        key={label}
-                        className="flex items-start gap-2 rounded-md bg-primary/5 p-2"
-                      >
-                        <div className="min-w-0 flex-1">
-                          {recipe ? (
-                            <button
-                              onClick={() => setViewingRecipeId(recipe.id)}
-                              className="text-sm font-medium leading-tight text-foreground hover:text-primary hover:underline text-left"
+                {mealTypeSections.length > 0 && (
+                  <div className="space-y-2">
+                    {mealTypeSections.map(({ mealType, groups }) => (
+                      <div key={mealType}>
+                        <p className="mb-1 text-xs font-medium text-muted">
+                          {MEAL_TYPE_LABELS[mealType]}
+                        </p>
+                        <div className="space-y-1.5">
+                          {groups.map(({ label, recipe, members }) => (
+                            <div
+                              key={label}
+                              className="flex items-start gap-2 rounded-md bg-primary/5 p-2"
                             >
-                              {label}
-                            </button>
-                          ) : (
-                            <p className="text-sm font-medium leading-tight">
-                              {label}
-                            </p>
-                          )}
-                          <div className="mt-0.5 flex flex-wrap gap-1">
-                            {members.length === familyMembers.length ? (
-                              <span className="text-xs text-muted">Alle</span>
-                            ) : (
-                              members.map((m) => (
-                                <span
-                                  key={m.forUser.id}
-                                  className="inline-flex items-center rounded bg-card px-1 text-xs text-muted"
+                              <div className="min-w-0 flex-1">
+                                {recipe ? (
+                                  <button
+                                    onClick={() => setViewingRecipeId(recipe.id)}
+                                    className="text-sm font-medium leading-tight text-foreground hover:text-primary hover:underline text-left"
+                                  >
+                                    {label}
+                                  </button>
+                                ) : (
+                                  <p className="text-sm font-medium leading-tight">
+                                    {label}
+                                  </p>
+                                )}
+                                <div className="mt-0.5 flex flex-wrap gap-1">
+                                  {members.length === familyMembers.length ? (
+                                    <span className="text-xs text-muted">Alle</span>
+                                  ) : (
+                                    members.map((m) => (
+                                      <span
+                                        key={m.forUser.id}
+                                        className="inline-flex items-center rounded bg-card px-1 text-xs text-muted"
+                                      >
+                                        {m.forUser.displayName}
+                                      </span>
+                                    ))
+                                  )}
+                                </div>
+                              </div>
+                              {/* Edit, Persons, and Delete buttons */}
+                              <div className="flex shrink-0 items-center gap-0.5">
+                                <button
+                                  onClick={() =>
+                                    setPickerTarget({
+                                      date: dateStr,
+                                      mealType,
+                                      editingEntry: members[0],
+                                      editingMembers: members,
+                                    })
+                                  }
+                                  className="rounded-full p-1.5 text-muted hover:text-primary"
+                                  title="Gericht ändern"
                                 >
-                                  {m.forUser.displayName}
-                                </span>
-                              ))
-                            )}
-                          </div>
-                        </div>
-                        {/* Edit, Persons, and Delete buttons */}
-                        <div className="flex shrink-0 items-center gap-0.5">
-                          <button
-                            onClick={() =>
-                              setPickerTarget({
-                                date: dateStr,
-                                editingEntry: members[0],
-                                editingMembers: members,
-                              })
-                            }
-                            className="rounded-full p-1.5 text-muted hover:text-primary"
-                            title="Gericht ändern"
-                          >
-                            <svg
-                              width="16"
-                              height="16"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                            >
-                              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                            </svg>
-                          </button>
-                          <button
-                            onClick={() =>
-                              setPickerTarget({
-                                date: dateStr,
-                                editingEntry: members[0],
-                                editingMembers: members,
-                                editPersonsOnly: true,
-                              })
-                            }
-                            className="rounded-full p-1.5 text-muted hover:text-primary"
-                            title="Personen ändern"
-                          >
-                            <svg
-                              width="16"
-                              height="16"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                            >
-                              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                              <circle cx="9" cy="7" r="4" />
-                              <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                            </svg>
-                          </button>
-                          <button
-                            onClick={() => {
-                              if (confirm("Eintrag wirklich löschen?")) {
-                                members.forEach((m) => removeEntry(m.id));
-                              }
-                            }}
-                            className="rounded-full p-1.5 text-muted hover:text-red-500"
-                            title="Löschen"
-                          >
-                            <svg
-                              width="16"
-                              height="16"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                            >
-                              <path d="M3 6h18" />
-                              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                            </svg>
-                          </button>
+                                  <svg
+                                    width="16"
+                                    height="16"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                  >
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                                  </svg>
+                                </button>
+                                <button
+                                  onClick={() =>
+                                    setPickerTarget({
+                                      date: dateStr,
+                                      mealType,
+                                      editingEntry: members[0],
+                                      editingMembers: members,
+                                      editPersonsOnly: true,
+                                    })
+                                  }
+                                  className="rounded-full p-1.5 text-muted hover:text-primary"
+                                  title="Personen ändern"
+                                >
+                                  <svg
+                                    width="16"
+                                    height="16"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                  >
+                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                                    <circle cx="9" cy="7" r="4" />
+                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                                  </svg>
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    if (confirm("Eintrag wirklich löschen?")) {
+                                      members.forEach((m) => removeEntry(m.id));
+                                    }
+                                  }}
+                                  className="rounded-full p-1.5 text-muted hover:text-red-500"
+                                  title="Löschen"
+                                >
+                                  <svg
+                                    width="16"
+                                    height="16"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                  >
+                                    <path d="M3 6h18" />
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                  </svg>
+                                </button>
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       </div>
                     ))}
                   </div>
                 )}
 
-                {!allAssigned && (
-                  <button
-                    onClick={() => setPickerTarget({ date: dateStr })}
-                    className={`flex w-full items-center justify-center rounded-md border border-dashed border-border p-3 text-sm text-muted transition-colors hover:border-primary hover:text-primary ${
-                      groups.length > 0 ? "mt-1.5" : ""
-                    }`}
-                  >
-                    + Gericht wählen
-                  </button>
-                )}
+                <button
+                  onClick={() => setPickerTarget({ date: dateStr, mealType: "abend" })}
+                  className={`flex w-full items-center justify-center rounded-md border border-dashed border-border p-3 text-sm text-muted transition-colors hover:border-primary hover:text-primary ${
+                    mealTypeSections.length > 0 ? "mt-1.5" : ""
+                  }`}
+                >
+                  + Gericht wählen
+                </button>
               </div>
             );
           })}
@@ -380,9 +411,11 @@ export function WeekPlanner() {
                   customMeal: pickerTarget.editingEntry.customMeal,
                   date: pickerTarget.date,
                   forUserIds: pickerTarget.editingMembers?.map((m) => m.forUser.id) || [],
+                  mealType: pickerTarget.editingEntry.mealType,
                 }
               : undefined
           }
+          defaultMealType={pickerTarget.mealType}
           editPersonsOnly={pickerTarget.editPersonsOnly}
           onSelect={assignMeal}
           onClose={() => setPickerTarget(null)}

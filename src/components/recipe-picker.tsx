@@ -2,6 +2,17 @@
 
 import { useEffect, useRef, useState } from "react";
 
+type MealType = "fruehstueck" | "mittag" | "abend" | "snacks";
+
+const MEAL_TYPE_LABELS: Record<MealType, string> = {
+  fruehstueck: "Frühstück",
+  mittag: "Mittag",
+  abend: "Abend",
+  snacks: "Snacks",
+};
+
+const MEAL_TYPE_OPTIONS: MealType[] = ["fruehstueck", "mittag", "abend", "snacks"];
+
 type Recipe = {
   id: string;
   name: string;
@@ -27,11 +38,14 @@ type Props = {
     customMeal?: string | null;
     date?: string;
     forUserIds?: string[];
+    mealType?: MealType;
   };
+  defaultMealType?: MealType;
   editPersonsOnly?: boolean;
   onSelect: (
     meal: { id?: string; name: string; customMeal?: string },
     forUserIds: string[],
+    mealType: MealType,
     options?: { date?: string; overwrite?: boolean },
   ) => void;
   onClose: () => void;
@@ -41,6 +55,7 @@ export function RecipePicker({
   familyMembers,
   existingAssignments,
   editingEntry,
+  defaultMealType = "abend",
   editPersonsOnly,
   onSelect,
   onClose,
@@ -54,6 +69,9 @@ export function RecipePicker({
     editingEntry?.forUserIds || [],
   );
   const [editDate, setEditDate] = useState(editingEntry?.date || "");
+  const [selectedMealType, setSelectedMealType] = useState<MealType>(
+    editingEntry?.mealType ?? defaultMealType,
+  );
   const [mode, setMode] = useState<"recipe" | "custom">(
     editingEntry?.customMeal ? "custom" : "recipe",
   );
@@ -130,9 +148,9 @@ export function RecipePicker({
     if (selectedUserIds.length === 0) return;
 
     if (isEditing) {
-      onSelect(meal, selectedUserIds, { date: editDate || undefined });
+      onSelect(meal, selectedUserIds, selectedMealType, { date: editDate || undefined });
     } else {
-      onSelect(meal, selectedUserIds);
+      onSelect(meal, selectedUserIds, selectedMealType);
     }
   }
 
@@ -232,6 +250,32 @@ export function RecipePicker({
               </svg>
             )}
           </button>
+        </div>
+
+        {/* MealType selector — always visible */}
+        <div className="mb-3">
+          <label className="mb-1 block text-xs font-medium text-muted">
+            Mahlzeit
+          </label>
+          <div className="flex rounded-lg border border-border">
+            {MEAL_TYPE_OPTIONS.map((mt, i) => (
+              <button
+                key={mt}
+                onClick={() => setSelectedMealType(mt)}
+                className={`flex-1 px-2 py-1.5 text-xs transition-colors ${
+                  i === 0 ? "rounded-l-lg" : ""
+                } ${
+                  i === MEAL_TYPE_OPTIONS.length - 1 ? "rounded-r-lg" : ""
+                } ${
+                  selectedMealType === mt
+                    ? "bg-primary text-white"
+                    : "hover:bg-background"
+                }`}
+              >
+                {MEAL_TYPE_LABELS[mt]}
+              </button>
+            ))}
+          </div>
         </div>
 
         {showUserSelection ? (
