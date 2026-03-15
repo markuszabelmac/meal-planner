@@ -92,7 +92,12 @@ Plans:
   3. The MealPlan schema supports 2 distinct meals per user per day (Mittag + Abend) without constraint errors
   4. Fuzzy ingredient search via `pg_trgm` returns results for German ingredient names against the seeded data
   5. The seed script has run and the ingredient DB contains data for common German cooking ingredients
-**Plans**: TBD
+**Plans:** 3 plans
+
+Plans:
+- [ ] 06-01-PLAN.md — Prisma schema migration (Ingredient, RecipeIngredient, MealType, Unit, pg_trgm, GIN indexes)
+- [ ] 06-02-PLAN.md — USDA SR Legacy seed script with German translations
+- [ ] 06-03-PLAN.md — Week planner mealType API + UI integration
 
 ### Phase 7: Ingredient Admin UI
 **Goal**: Users can manage the ingredient database — searching, adding, editing, and deleting entries — directly in the app.
@@ -147,7 +152,7 @@ Plans:
 | 3. Wochenplaner | v1.0 | — | Complete | — |
 | 4. KI-Inspiration | v1.0 | — | Complete | — |
 | 5. Polish & Deploy | v1.0 | — | Complete | — |
-| 6. Schema & Data Foundation | v1.1 | 0/? | Not started | - |
+| 6. Schema & Data Foundation | v1.1 | 0/3 | Planning | - |
 | 7. Ingredient Admin UI | v1.1 | 0/? | Not started | - |
 | 8. Structured Ingredient Entry & Nutrition Display | v1.1 | 0/? | Not started | - |
 | 9. AI Matching & Estimation | v1.1 | 0/? | Not started | - |
