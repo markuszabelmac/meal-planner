@@ -7,6 +7,28 @@ datasource db {
   provider = "postgresql"
 }
 
+enum MealType {
+  fruehstueck
+  mittag
+  abend
+  snacks
+
+  @@map("MealType")
+}
+
+enum Unit {
+  g
+  kg
+  ml
+  l
+  stueck
+  el
+  tl
+  prise
+
+  @@map("Unit")
+}
+
 model User {
   id            String     @id @default(cuid())
   email         String     @unique
@@ -24,39 +46,78 @@ model User {
 }
 
 model Recipe {
-  id           String     @id @default(cuid())
-  name         String
-  description  String?
-  ingredients  String?
-  instructions String?
-  imageUrl     String?    @map("image_url")
-  prepTime     Int?       @map("prep_time")
-  servings     Int?
-  category     String?
-  tags         String[]   @default([])
-  sourceUrl    String?    @map("source_url")
-  createdBy    String     @map("created_by")
-  createdAt    DateTime   @default(now()) @map("created_at")
-  updatedAt    DateTime   @updatedAt @map("updated_at")
-  creator      User       @relation(fields: [createdBy], references: [id])
-  mealPlans    MealPlan[]
+  id                String              @id @default(cuid())
+  name              String
+  description       String?
+  ingredients       String?
+  instructions      String?
+  imageUrl          String?             @map("image_url")
+  prepTime          Int?                @map("prep_time")
+  servings          Int?
+  category          String?
+  tags              String[]            @default([])
+  sourceUrl         String?             @map("source_url")
+  createdBy         String              @map("created_by")
+  createdAt         DateTime            @default(now()) @map("created_at")
+  updatedAt         DateTime            @updatedAt @map("updated_at")
+  creator           User                @relation(fields: [createdBy], references: [id])
+  mealPlans         MealPlan[]
+  recipeIngredients RecipeIngredient[]
 
   @@map("recipes")
 }
 
-model MealPlan {
-  id         String   @id @default(cuid())
-  date       DateTime @db.Date
-  recipeId   String?  @map("recipe_id")
-  customMeal String?  @map("custom_meal")
-  forUserId  String   @map("for_user_id")
-  assignedBy String   @map("assigned_by")
-  createdAt  DateTime @default(now()) @map("created_at")
-  recipe     Recipe?  @relation(fields: [recipeId], references: [id])
-  forUser    User     @relation("ForUser", fields: [forUserId], references: [id])
-  assigner   User     @relation("AssignedBy", fields: [assignedBy], references: [id])
+model Ingredient {
+  id               String             @id @default(cuid())
+  name             String
+  nameEn           String?            @map("name_en")
+  fdcId            Int?               @unique @map("fdc_id")
+  kcalPer100g      Float              @map("kcal_per_100g")
+  proteinPer100g   Float?             @map("protein_per_100g")
+  fatPer100g       Float?             @map("fat_per_100g")
+  satFatPer100g    Float?             @map("sat_fat_per_100g")
+  carbsPer100g     Float?             @map("carbs_per_100g")
+  sugarPer100g     Float?             @map("sugar_per_100g")
+  fiberPer100g     Float?             @map("fiber_per_100g")
+  isCustom         Boolean            @default(false) @map("is_custom")
+  createdAt        DateTime           @default(now()) @map("created_at")
+  updatedAt        DateTime           @updatedAt @map("updated_at")
+  recipeIngredients RecipeIngredient[]
 
-  @@unique([date, forUserId])
+  @@map("ingredients")
+}
+
+model RecipeIngredient {
+  id               String      @id @default(cuid())
+  recipeId         String      @map("recipe_id")
+  ingredientId     String?     @map("ingredient_id")
+  amount           Float
+  unit             Unit
+  estimatedKcal    Float?      @map("estimated_kcal")
+  estimatedProtein Float?      @map("estimated_protein")
+  estimatedFat     Float?      @map("estimated_fat")
+  estimatedCarbs   Float?      @map("estimated_carbs")
+  createdAt        DateTime    @default(now()) @map("created_at")
+  recipe           Recipe      @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  ingredient       Ingredient? @relation(fields: [ingredientId], references: [id], onDelete: SetNull)
+
+  @@map("recipe_ingredients")
+}
+
+model MealPlan {
+  id         String    @id @default(cuid())
+  date       DateTime  @db.Date
+  mealType   MealType  @map("meal_type")
+  recipeId   String?   @map("recipe_id")
+  customMeal String?   @map("custom_meal")
+  forUserId  String    @map("for_user_id")
+  assignedBy String    @map("assigned_by")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  recipe     Recipe?   @relation(fields: [recipeId], references: [id])
+  forUser    User      @relation("ForUser", fields: [forUserId], references: [id])
+  assigner   User      @relation("AssignedBy", fields: [assignedBy], references: [id])
+
+  @@unique([date, forUserId, mealType])
   @@map("meal_plans")
 }
 

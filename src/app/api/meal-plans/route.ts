@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { MealType } from "@/generated/prisma/client";
 
 // GET /api/meal-plans?from=2026-02-09&to=2026-02-15
 export async function GET(request: Request) {
@@ -32,7 +33,7 @@ export async function GET(request: Request) {
       forUser: { select: { id: true, displayName: true } },
       assigner: { select: { displayName: true } },
     },
-    orderBy: [{ date: "asc" }],
+    orderBy: [{ date: "asc" }, { mealType: "asc" }],
   });
 
   return NextResponse.json(mealPlans);
@@ -45,7 +46,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Nicht angemeldet" }, { status: 401 });
   }
 
-  const { date, recipeId, customMeal, forUserIds } = await request.json();
+  const { date, recipeId, customMeal, forUserIds, mealType } = await request.json();
 
   if (!date || !forUserIds?.length) {
     return NextResponse.json(
@@ -61,13 +62,16 @@ export async function POST(request: Request) {
     );
   }
 
+  const resolvedMealType: MealType = mealType ?? "abend";
+
   const results = await Promise.all(
     (forUserIds as string[]).map((forUserId) =>
       prisma.mealPlan.upsert({
         where: {
-          date_forUserId: {
+          date_forUserId_mealType: {
             date: new Date(date),
             forUserId,
+            mealType: resolvedMealType,
           },
         },
         update: {
@@ -77,6 +81,7 @@ export async function POST(request: Request) {
         },
         create: {
           date: new Date(date),
+          mealType: resolvedMealType,
           recipeId: recipeId || null,
           customMeal: customMeal || null,
           forUserId,
@@ -101,7 +106,7 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: "Nicht angemeldet" }, { status: 401 });
   }
 
-  const { id, recipeId, customMeal, date, forUserIds, overwrite } = await request.json();
+  const { id, recipeId, customMeal, date, forUserIds, mealType, overwrite } = await request.json();
 
   if (!id) {
     return NextResponse.json({ error: "id erforderlich" }, { status: 400 });
@@ -120,12 +125,14 @@ export async function PUT(request: Request) {
   }
 
   const targetDate = date ? new Date(date) : existing.date;
+  const targetMealType: MealType = mealType ?? existing.mealType;
   const targetUserIds: string[] = forUserIds?.length ? forUserIds : [existing.forUserId];
 
-  // Check for conflicts at the target date for the target users
+  // Check for conflicts at the target date+mealType for the target users
   const conflicts = await prisma.mealPlan.findMany({
     where: {
       date: targetDate,
+      mealType: targetMealType,
       forUserId: { in: targetUserIds },
       id: { not: id },
     },
@@ -164,9 +171,10 @@ export async function PUT(request: Request) {
     targetUserIds.map((forUserId) =>
       prisma.mealPlan.upsert({
         where: {
-          date_forUserId: {
+          date_forUserId_mealType: {
             date: targetDate,
             forUserId,
+            mealType: targetMealType,
           },
         },
         update: {
@@ -176,6 +184,7 @@ export async function PUT(request: Request) {
         },
         create: {
           date: targetDate,
+          mealType: targetMealType,
           recipeId: recipeId || null,
           customMeal: customMeal || null,
           forUserId,
