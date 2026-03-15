@@ -10,7 +10,7 @@ const adapter = new PrismaPg({ connectionString });
 const prisma = new PrismaClient({ adapter });
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY, timeout: 30_000 });
 
-const BATCH_SIZE = 10; // Small batches for reliability
+const BATCH_SIZE = 1; // One at a time for maximum reliability
 
 async function translateSmallBatch(names: string[]): Promise<string[]> {
   try {
