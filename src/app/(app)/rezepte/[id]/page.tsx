@@ -7,10 +7,13 @@ import { Breadcrumbs } from "@/components/breadcrumbs";
 
 export default async function RecipeDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ from?: string }>;
 }) {
   const { id } = await params;
+  const { from } = await searchParams;
   const recipe = await prisma.recipe.findUnique({
     where: { id },
     include: { creator: { select: { displayName: true } } },
@@ -21,10 +24,17 @@ export default async function RecipeDetailPage({
   return (
     <div>
       <Breadcrumbs
-        items={[
-          { label: "Rezepte", href: "/rezepte" },
-          { label: recipe.name },
-        ]}
+        items={
+          from === "planner"
+            ? [
+                { label: "Wochenplan", href: "/" },
+                { label: recipe.name },
+              ]
+            : [
+                { label: "Rezepte", href: "/rezepte" },
+                { label: recipe.name },
+              ]
+        }
       />
       <div className="mb-6 flex items-start justify-between">
         <div>
