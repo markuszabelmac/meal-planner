@@ -43,3 +43,6 @@ yarn-error.log*
 next-env.d.ts
 
 /src/generated/prisma
+
+# USDA seed data (large JSON files, not needed in git)
+/prisma/seed-data/*.json
