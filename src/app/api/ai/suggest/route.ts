@@ -139,11 +139,17 @@ Regeln:
 
     const text = response.choices[0]?.message?.content ?? "{}";
 
+    console.log("[AI Debug] Model:", response.model);
+    console.log("[AI Debug] Finish reason:", response.choices[0]?.finish_reason);
+    console.log("[AI Debug] Response length:", text.length);
+    console.log("[AI Debug] Response preview:", text.slice(0, 300));
+
     return NextResponse.json({ response: text });
   } catch (error) {
-    console.error("OpenAI API error:", error);
+    console.error("[AI Debug] OpenAI API error:", error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
-      { error: "Fehler bei der KI-Anfrage" },
+      { error: `Fehler bei der KI-Anfrage: ${errorMessage}` },
       { status: 500 },
     );
   }

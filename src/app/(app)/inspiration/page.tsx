@@ -23,15 +23,28 @@ type Conversation = {
   messages: { content: string; role: string }[];
 };
 
-function parseRecipes(content: string): Recipe[] | null {
+function parseRecipes(content: string): { recipes: Recipe[] | null; debug: string } {
   try {
     const parsed = JSON.parse(content);
     const arr = Array.isArray(parsed) ? parsed : parsed.recipes;
-    if (!Array.isArray(arr) || arr.length === 0) return null;
-    if (!arr[0].name) return null;
-    return arr;
-  } catch {
-    return null;
+    if (!Array.isArray(arr) || arr.length === 0) {
+      return {
+        recipes: null,
+        debug: `Parsed OK, aber kein Array gefunden. Keys: ${Object.keys(parsed).join(", ")}. Type: ${typeof parsed}. isArray: ${Array.isArray(parsed)}`,
+      };
+    }
+    if (!arr[0].name) {
+      return {
+        recipes: null,
+        debug: `Array gefunden (${arr.length} Einträge), aber kein 'name' Feld. Erster Eintrag Keys: ${Object.keys(arr[0]).join(", ")}`,
+      };
+    }
+    return { recipes: arr, debug: `OK: ${arr.length} Rezepte geparst` };
+  } catch (e) {
+    return {
+      recipes: null,
+      debug: `JSON Parse Fehler: ${e instanceof Error ? e.message : String(e)}. Content Anfang: "${content.slice(0, 200)}"`,
+    };
   }
 }
 
@@ -43,6 +56,7 @@ export default function InspirationPage() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [savingRecipe, setSavingRecipe] = useState<string | null>(null);
+  const [showDebug, setShowDebug] = useState(false);
 
   // Load conversations on mount
   useEffect(() => {
@@ -112,14 +126,16 @@ export default function InspirationPage() {
 
       if (!res.ok) {
         const data = await res.json();
+        console.log("[Debug] API Error:", res.status, data);
         setMessages((prev) => [
           ...prev,
-          { role: "assistant", content: data.error || "Fehler bei der Anfrage" },
+          { role: "assistant", content: `[Fehler ${res.status}] ${data.error || "Fehler bei der Anfrage"}` },
         ]);
         return;
       }
 
       const data = await res.json();
+      console.log("[Debug] AI Response erhalten:", data.response?.slice(0, 200));
 
       // Store assistant message
       const msgRes = await fetch(`/api/conversations/${convId}/messages`, {
@@ -180,7 +196,15 @@ export default function InspirationPage() {
 
   return (
     <div className="flex flex-col">
-      <h2 className="mb-4 text-2xl font-bold">Inspiration</h2>
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="text-2xl font-bold">Inspiration</h2>
+        <button
+          onClick={() => setShowDebug((v) => !v)}
+          className="rounded border border-border px-2 py-1 text-xs text-muted hover:text-foreground"
+        >
+          {showDebug ? "Debug aus" : "Debug an"}
+        </button>
+      </div>
 
       {/* Conversation list */}
       {conversations.length > 0 && (
@@ -278,17 +302,45 @@ export default function InspirationPage() {
             ) : (
               <div className="space-y-3">
                 {(() => {
-                  const recipes = parseRecipes(msg.content);
+                  const { recipes, debug } = parseRecipes(msg.content);
 
                   if (!recipes) {
                     return (
-                      <div className="rounded-2xl rounded-bl-md border border-border bg-card px-4 py-3 text-sm leading-relaxed">
-                        {msg.content}
-                      </div>
+                      <>
+                        {showDebug && (
+                          <div className="rounded-lg border border-yellow-500/30 bg-yellow-500/10 px-3 py-2 text-xs font-mono text-yellow-700 dark:text-yellow-300">
+                            <p className="font-bold">Debug (kein Rezept-Parse):</p>
+                            <p>{debug}</p>
+                            <details className="mt-1">
+                              <summary className="cursor-pointer">Raw Content</summary>
+                              <pre className="mt-1 max-h-40 overflow-auto whitespace-pre-wrap break-all">{msg.content}</pre>
+                            </details>
+                          </div>
+                        )}
+                        <div className="rounded-2xl rounded-bl-md border border-border bg-card px-4 py-3 text-sm leading-relaxed">
+                          {msg.content}
+                        </div>
+                      </>
                     );
                   }
 
-                  return recipes.map((recipe, j) => {
+                  return (
+                    <>
+                      {showDebug && (
+                        <div className="rounded-lg border border-green-500/30 bg-green-500/10 px-3 py-2 text-xs font-mono text-green-700 dark:text-green-300">
+                          <p className="font-bold">Debug (Rezepte erkannt):</p>
+                          <p>{debug}</p>
+                          <details className="mt-1">
+                            <summary className="cursor-pointer">Raw Content</summary>
+                            <pre className="mt-1 max-h-40 overflow-auto whitespace-pre-wrap break-all">{msg.content}</pre>
+                          </details>
+                          <details className="mt-1">
+                            <summary className="cursor-pointer">Parsed Recipes</summary>
+                            <pre className="mt-1 max-h-40 overflow-auto whitespace-pre-wrap break-all">{JSON.stringify(recipes, null, 2)}</pre>
+                          </details>
+                        </div>
+                      )}
+                      {recipes.map((recipe, j) => {
                     const isSaving = savingRecipe === recipe.name;
                     return (
                       <div
@@ -320,7 +372,9 @@ export default function InspirationPage() {
                         </button>
                       </div>
                     );
-                  });
+                  })}
+                    </>
+                  );
                 })()}
               </div>
             )}
