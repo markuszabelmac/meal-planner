@@ -25,6 +25,10 @@ enum Unit {
   el
   tl
   prise
+  bund
+  dose
+  scheibe
+  becher
 
   @@map("Unit")
 }
