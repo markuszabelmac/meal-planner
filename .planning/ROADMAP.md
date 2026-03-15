@@ -108,7 +108,11 @@ Plans:
   2. User can create a new ingredient with name, unit, and nutrition values per 100g
   3. User can edit an existing ingredient's name, aliases, and nutrition values
   4. User can delete an ingredient (with safe handling if it is linked to recipes)
-**Plans**: TBD
+**Plans:** 2 plans
+
+Plans:
+- [ ] 07-01-PLAN.md — Ingredient CRUD API routes + shared components (form, delete button, nav icon)
+- [ ] 07-02-PLAN.md — Ingredient page routes (list, create, edit) + human verification
 
 ### Phase 8: Structured Ingredient Entry & Nutrition Display
 **Goal**: Users can attach structured ingredients to recipes and immediately see calculated nutrition per portion on the recipe detail page.
@@ -153,7 +157,7 @@ Plans:
 | 4. KI-Inspiration | v1.0 | — | Complete | — |
 | 5. Polish & Deploy | v1.0 | — | Complete | — |
 | 6. Schema & Data Foundation | 3/3 | Complete   | 2026-03-15 | - |
-| 7. Ingredient Admin UI | v1.1 | 0/? | Not started | - |
+| 7. Ingredient Admin UI | v1.1 | 0/2 | Planned | - |
 | 8. Structured Ingredient Entry & Nutrition Display | v1.1 | 0/? | Not started | - |
 | 9. AI Matching & Estimation | v1.1 | 0/? | Not started | - |
 | 10. Nutrition History | v1.1 | 0/? | Not started | - |
