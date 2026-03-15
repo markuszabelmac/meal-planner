@@ -12,7 +12,10 @@ Phase 1: Projekt-Setup & Auth (not started)
 - [ ] Phase 5: Polish & Deploy
 
 ## Quick Tasks Completed
-- QUICK-1: Recipe names in week planner are clickable links to recipe detail page with context-aware back navigation (2026-03-15)
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 1 | Rezept im Wochenplan anklickbar mit Zurück-Navigation | 2026-03-15 | dff50a2 | [1-wenn-man-im-wochenplan-auf-ein-rezept-kl](./quick/1-wenn-man-im-wochenplan-auf-ein-rezept-kl/) |
 
 ## Notes
 - Projekt erstellt am 2026-02-11
