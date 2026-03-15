@@ -1,6 +1,4 @@
-import { Unit } from "@/generated/prisma/client";
-
-export { Unit };
+export type Unit = "g" | "kg" | "ml" | "l" | "stueck" | "el" | "tl" | "prise";
 
 /**
  * Conversion factors from each unit to grams.
