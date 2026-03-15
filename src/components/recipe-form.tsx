@@ -1,7 +1,11 @@
 "use client";
 
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import {
+  IngredientRowEditor,
+  IngredientRowState,
+} from "@/components/ingredient-row-editor";
 
 const SUGGESTED_CATEGORIES = [
   "Pasta",
@@ -37,6 +41,19 @@ export type RecipeData = {
   recipeIngredients?: RecipeIngredientFormData[];
 };
 
+function makeEmptyRow(): IngredientRowState {
+  return {
+    id: crypto.randomUUID(),
+    searchText: "",
+    ingredientId: null,
+    ingredientName: "",
+    amount: "",
+    unit: "g",
+    suggestions: [],
+    showDropdown: false,
+  };
+}
+
 export function RecipeForm({ initial }: { initial?: RecipeData }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -45,7 +62,9 @@ export function RecipeForm({ initial }: { initial?: RecipeData }) {
   const [name, setName] = useState(initial?.name || "");
   const [description, setDescription] = useState(initial?.description || "");
   const [ingredients, setIngredients] = useState(initial?.ingredients || "");
-  const [instructions, setInstructions] = useState(initial?.instructions || "");
+  const [instructions, setInstructions] = useState(
+    initial?.instructions || "",
+  );
   const [imageUrl, setImageUrl] = useState(initial?.imageUrl || "");
   const [prepTime, setPrepTime] = useState(initial?.prepTime || "");
   const [servings, setServings] = useState(initial?.servings || "");
@@ -53,7 +72,112 @@ export function RecipeForm({ initial }: { initial?: RecipeData }) {
   const [tagInput, setTagInput] = useState("");
   const [tags, setTags] = useState<string[]>(initial?.tags || []);
 
+  const [ingredientRows, setIngredientRows] = useState<IngredientRowState[]>(
+    () => {
+      if (initial?.recipeIngredients?.length) {
+        return initial.recipeIngredients.map((ri) => ({
+          id: crypto.randomUUID(),
+          searchText: ri.ingredientName,
+          ingredientId: ri.ingredientId,
+          ingredientName: ri.ingredientName,
+          amount: ri.amount,
+          unit: ri.unit,
+          suggestions: [],
+          showDropdown: false,
+        }));
+      }
+      return [];
+    },
+  );
+
+  // Per-row request counter to avoid stale autocomplete results overwriting newer ones
+  const requestCounters = useRef<Record<string, number>>({});
+
   const isEdit = !!initial?.id;
+
+  // --- Ingredient row helpers ---
+
+  function updateRow(rowId: string, patch: Partial<IngredientRowState>) {
+    setIngredientRows((rows) =>
+      rows.map((r) => (r.id === rowId ? { ...r, ...patch } : r)),
+    );
+  }
+
+  async function handleSearchChange(rowId: string, text: string) {
+    // Clear selection when user edits text
+    updateRow(rowId, {
+      searchText: text,
+      ingredientId: null,
+      ingredientName: "",
+    });
+
+    if (text.length < 2) {
+      updateRow(rowId, { suggestions: [], showDropdown: false });
+      return;
+    }
+
+    // Bump request counter to detect stale responses
+    if (!requestCounters.current[rowId]) {
+      requestCounters.current[rowId] = 0;
+    }
+    const reqId = ++requestCounters.current[rowId];
+
+    try {
+      const res = await fetch(
+        `/api/ingredients?search=${encodeURIComponent(text)}`,
+      );
+      if (!res.ok) return;
+      const data = await res.json();
+
+      // Discard if a newer request has already been issued
+      if (requestCounters.current[rowId] !== reqId) return;
+
+      const suggestions = (data as { id: string; name: string }[]).slice(0, 8);
+      updateRow(rowId, { suggestions, showDropdown: suggestions.length > 0 });
+    } catch {
+      // Silently ignore network errors for autocomplete
+    }
+  }
+
+  function handleSuggestionSelect(
+    rowId: string,
+    suggestion: { id: string; name: string },
+  ) {
+    updateRow(rowId, {
+      ingredientId: suggestion.id,
+      ingredientName: suggestion.name,
+      searchText: suggestion.name,
+      suggestions: [],
+      showDropdown: false,
+    });
+  }
+
+  function handleSearchBlur(rowId: string) {
+    // Delay to let onMouseDown on suggestion item fire first
+    setTimeout(() => {
+      updateRow(rowId, { showDropdown: false });
+    }, 150);
+  }
+
+  function handleSearchKeyDown(
+    rowId: string,
+    e: React.KeyboardEvent<HTMLInputElement>,
+  ) {
+    if (e.key === "Escape") {
+      updateRow(rowId, { showDropdown: false });
+    }
+  }
+
+  function addIngredientRow() {
+    setIngredientRows((rows) => [...rows, makeEmptyRow()]);
+  }
+
+  function removeIngredientRow(rowId: string) {
+    setIngredientRows((rows) => rows.filter((r) => r.id !== rowId));
+    delete requestCounters.current[rowId];
+  }
+
+  // --- Tags ---
 
   function addTag(tag: string) {
     const trimmed = tag.trim();
@@ -67,6 +191,8 @@ export function RecipeForm({ initial }: { initial?: RecipeData }) {
     setTags(tags.filter((t) => t !== tag));
   }
 
+  // --- Submit ---
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
@@ -74,6 +200,15 @@ export function RecipeForm({ initial }: { initial?: RecipeData }) {
 
     const url = isEdit ? `/api/recipes/${initial.id}` : "/api/recipes";
     const method = isEdit ? "PUT" : "POST";
+
+    // Build valid structured ingredient rows: must have an ingredientId and a valid positive amount
+    const recipeIngredients = ingredientRows
+      .filter((r) => r.ingredientId && parseFloat(r.amount) > 0)
+      .map((r) => ({
+        ingredientId: r.ingredientId,
+        amount: parseFloat(r.amount),
+        unit: r.unit,
+      }));
 
     const res = await fetch(url, {
       method,
@@ -88,6 +223,7 @@ export function RecipeForm({ initial }: { initial?: RecipeData }) {
         servings,
         category,
         tags,
+        recipeIngredients,
       }),
     });
 
@@ -146,13 +282,47 @@ export function RecipeForm({ initial }: { initial?: RecipeData }) {
         />
       </div>
 
-      {/* Ingredients */}
+      {/* Structured Ingredients */}
+      <div>
+        <label className="mb-1 block text-sm font-medium">
+          Strukturierte Zutaten
+        </label>
+        <p className="mb-2 text-xs text-muted">
+          Zutaten aus der Datenbank verknüpfen, um Nährwerte zu berechnen.
+        </p>
+
+        <div className="space-y-2">
+          {ingredientRows.map((row) => (
+            <IngredientRowEditor
+              key={row.id}
+              row={row}
+              onSearchChange={(text) => handleSearchChange(row.id, text)}
+              onSuggestionSelect={(s) => handleSuggestionSelect(row.id, s)}
+              onBlur={() => handleSearchBlur(row.id)}
+              onKeyDown={(e) => handleSearchKeyDown(row.id, e)}
+              onAmountChange={(amount) => updateRow(row.id, { amount })}
+              onUnitChange={(unit) => updateRow(row.id, { unit })}
+              onRemove={() => removeIngredientRow(row.id)}
+            />
+          ))}
+        </div>
+
+        <button
+          type="button"
+          onClick={addIngredientRow}
+          className="mt-2 rounded-lg border border-border px-3 py-1.5 text-sm text-muted hover:border-primary hover:text-primary"
+        >
+          + Zutat hinzufügen
+        </button>
+      </div>
+
+      {/* Ingredients (freetext) */}
       <div>
         <label
           htmlFor="ingredients"
           className="mb-1 block text-sm font-medium"
         >
-          Zutaten
+          Zutaten (Freitext)
         </label>
         <textarea
           id="ingredients"
@@ -177,7 +347,9 @@ export function RecipeForm({ initial }: { initial?: RecipeData }) {
           value={instructions}
           onChange={(e) => setInstructions(e.target.value)}
           rows={8}
-          placeholder={"Schritt 1: Wasser aufkochen\nSchritt 2: Nudeln hinzugeben\n..."}
+          placeholder={
+            "Schritt 1: Wasser aufkochen\nSchritt 2: Nudeln hinzugeben\n..."
+          }
           className="w-full rounded-lg border border-border px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
         />
       </div>
