@@ -123,7 +123,7 @@ Plans:
   2. User can set an amount and unit for each ingredient in the recipe
   3. Recipes with structured ingredients show a nutrition table (kcal, protein, fat, carbs) per portion on the detail page
   4. Recipes without structured ingredients still display their existing freetext ingredient list (no regression)
-**Plans:** 3 plans
+**Plans:** 1/3 plans executed
 
 Plans:
 - [ ] 08-01-PLAN.md — Recipe API extensions for recipeIngredients (POST/PUT/GET) + edit page include
@@ -163,6 +163,6 @@ Plans:
 | 5. Polish & Deploy | v1.0 | — | Complete | — |
 | 6. Schema & Data Foundation | 3/3 | Complete   | 2026-03-15 | - |
 | 7. Ingredient Admin UI | 2/2 | Complete   | 2026-03-15 | - |
-| 8. Structured Ingredient Entry & Nutrition Display | v1.1 | 0/3 | Planned | - |
+| 8. Structured Ingredient Entry & Nutrition Display | 1/3 | In Progress|  | - |
 | 9. AI Matching & Estimation | v1.1 | 0/? | Not started | - |
 | 10. Nutrition History | v1.1 | 0/? | Not started | - |

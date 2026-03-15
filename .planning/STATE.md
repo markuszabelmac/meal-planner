@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Nährstoffe
-status: planning
-stopped_at: Completed 07-02-PLAN.md
-last_updated: "2026-03-15T20:00:00.000Z"
-last_activity: 2026-03-15 — Completed Phase 07-02: ingredient admin UI page routes
+status: completed
+stopped_at: Completed 08-01-PLAN.md
+last_updated: "2026-03-15T21:04:44.948Z"
+last_activity: "2026-03-15 — Completed Phase 07-02: ingredient admin UI page routes (user verified)"
 progress:
   total_phases: 10
-  completed_phases: 1
-  total_plans: 5
-  completed_plans: 5
+  completed_phases: 2
+  total_plans: 8
+  completed_plans: 6
   percent: 55
 ---
 
@@ -48,6 +48,7 @@ Progress: [███████░░░] 55% (v1.0 complete; Phase 7 complete)
 | Phase 06-schema-data-foundation P02 | 65 | 2 tasks | 4 files |
 | Phase 07-ingredient-admin-ui P01 | 3 | 2 tasks | 6 files |
 | Phase 07-ingredient-admin-ui P02 | 15 | 3 tasks | 3 files |
+| Phase 08-structured-ingredient-entry-nutrition-display P01 | 2 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -69,6 +70,8 @@ Progress: [███████░░░] 55% (v1.0 complete; Phase 7 complete)
 - [Phase 07-ingredient-admin-ui]: DELETE /api/ingredients/[id] returns detachedRecipes count so callers can warn if recipes lose structured ingredient link
 - [Phase 07-ingredient-admin-ui P02]: Edit page is a server component loading ingredient via Prisma at request time — avoids client-side API call for initial form data
 - [Phase 07-ingredient-admin-ui P02]: List page uses no debounce on search — pg_trgm is fast and result caps (50/100) keep latency acceptable
+- [Phase 08-structured-ingredient-entry-nutrition-display]: Cast unit string to Unit enum at API boundary; invalid values rejected by DB constraint
+- [Phase 08-structured-ingredient-entry-nutrition-display]: Export RecipeData and RecipeIngredientFormData types from recipe-form.tsx for Plan 02 use
 
 ### Pending Todos
 
@@ -82,6 +85,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-15T20:00:00.000Z
-Stopped at: Completed 07-02-PLAN.md
+Last session: 2026-03-15T21:04:44.946Z
+Stopped at: Completed 08-01-PLAN.md
 Resume file: None

@@ -43,8 +43,8 @@ Requirements für Milestone v1.1: Nährstoffe.
 - [x] **DB-05**: USDA Seed-Script mit deutschen Aliassen für gängige Zutaten
 
 ### Eingabe (INPUT)
-- [ ] **INPUT-01**: User kann beim Rezept-Erstellen Zutaten per Autocomplete aus der Datenbank wählen
-- [ ] **INPUT-02**: User kann Menge und Einheit pro Zutat eingeben
+- [x] **INPUT-01**: User kann beim Rezept-Erstellen Zutaten per Autocomplete aus der Datenbank wählen
+- [x] **INPUT-02**: User kann Menge und Einheit pro Zutat eingeben
 - [ ] **INPUT-03**: Bei URL-Import werden Zutaten automatisch gegen DB gematcht
 - [ ] **INPUT-04**: Bei KI-Rezept-Speicherung werden Zutaten automatisch gegen DB gematcht
 - [ ] **INPUT-05**: Unbekannte Zutaten erhalten KI-geschätzte Nährwerte als Fallback
@@ -81,8 +81,8 @@ Deferred to future release.
 | DB-03 | Phase 6 | Complete |
 | DB-04 | Phase 6 | Complete |
 | DB-05 | Phase 6 | Complete |
-| INPUT-01 | Phase 8 | Pending |
-| INPUT-02 | Phase 8 | Pending |
+| INPUT-01 | Phase 8 | Complete |
+| INPUT-02 | Phase 8 | Complete |
 | INPUT-03 | Phase 9 | Pending |
 | INPUT-04 | Phase 9 | Pending |
 | INPUT-05 | Phase 9 | Pending |
