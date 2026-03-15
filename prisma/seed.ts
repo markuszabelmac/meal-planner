@@ -36,6 +36,10 @@ const NUTRIENT_SUGARS = 2000;
 const NUTRIENT_FIBER = 1079;
 
 const BATCH_SIZE = 50;
+// Limit to keep translation cost reasonable while exceeding 2000 min
+const MAX_ITEMS = 6000;
+// Timeout for each OpenAI call in ms
+const OPENAI_TIMEOUT_MS = 45_000;
 
 // ---------------------------------------------------------------------------
 // Types
@@ -79,6 +83,7 @@ const prisma = new PrismaClient({ adapter });
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
+  timeout: OPENAI_TIMEOUT_MS,
 });
 
 // ---------------------------------------------------------------------------
@@ -103,8 +108,13 @@ async function translateBatch(
       messages: [
         {
           role: "system",
-          content:
-            "Translate the following food ingredient names from English to German. Return a JSON object with a single key 'translations' containing an array of strings in the same order. Use common German food names (e.g., 'Chicken breast, raw' -> 'Hähnchenbrust, roh', 'Potatoes, raw' -> 'Kartoffeln, roh'). If no standard German translation exists, keep the English term.",
+          content: `You are a food translation assistant. Translate ${names.length} food ingredient names from English to German.
+Return a JSON object with exactly one key "translations" containing an array of exactly ${names.length} strings in the same order as the input.
+Rules:
+- Use common German food names (e.g. "Chicken breast, raw" -> "Hähnchenbrust, roh")
+- If no standard German translation exists, keep the English term
+- Every input must have exactly one output — never skip or merge items
+- Return EXACTLY ${names.length} translations`,
         },
         {
           role: "user",
@@ -119,23 +129,48 @@ async function translateBatch(
 
     const parsed = JSON.parse(content);
     const translations: string[] =
-      parsed.translations || parsed.Translations || Object.values(parsed)[0];
+      parsed.translations ||
+      parsed.Translations ||
+      parsed.result ||
+      (Array.isArray(Object.values(parsed)[0]) ? Object.values(parsed)[0] as string[] : null);
 
-    if (!Array.isArray(translations) || translations.length !== names.length) {
+    if (!Array.isArray(translations)) {
+      console.warn(`  [WARN] Translation response missing array (attempt ${attempt})`);
+      if (attempt < 2) {
+        await new Promise((r) => setTimeout(r, 1000));
+        return translateBatch(names, attempt + 1);
+      }
+      return null;
+    }
+
+    if (translations.length !== names.length) {
       console.warn(
-        `  [WARN] Translation response length mismatch: expected ${names.length}, got ${translations?.length}`
+        `  [WARN] Translation length mismatch: expected ${names.length}, got ${translations.length} (attempt ${attempt})`
       );
+      // If close enough (within 2), pad/truncate to match
+      if (Math.abs(translations.length - names.length) <= 2 && attempt >= 2) {
+        // Pad with English names if short
+        while (translations.length < names.length) {
+          translations.push(names[translations.length]);
+        }
+        return translations.slice(0, names.length);
+      }
+      if (attempt < 2) {
+        await new Promise((r) => setTimeout(r, 1000));
+        return translateBatch(names, attempt + 1);
+      }
       return null;
     }
 
     return translations;
-  } catch (error) {
+  } catch (error: unknown) {
+    const errMsg = error instanceof Error ? error.message : String(error);
     if (attempt < 2) {
-      console.warn(`  [WARN] Translation attempt ${attempt} failed, retrying...`);
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      console.warn(`  [WARN] Translation attempt ${attempt} failed (${errMsg.slice(0, 60)}), retrying...`);
+      await new Promise((r) => setTimeout(r, 2000));
       return translateBatch(names, attempt + 1);
     }
-    console.warn(`  [WARN] Translation failed after 2 attempts:`, error);
+    console.warn(`  [WARN] Translation failed after 2 attempts: ${errMsg.slice(0, 80)}`);
     return null;
   }
 }
@@ -195,23 +230,30 @@ async function main() {
       sugarPer100g: getNutrientAmount(food.foodNutrients, NUTRIENT_SUGARS),
       fiberPer100g: getNutrientAmount(food.foodNutrients, NUTRIENT_FIBER),
     });
+
+    if (processed.length >= MAX_ITEMS) break;
   }
 
-  console.log(`Foods with kcal data: ${processed.length}`);
+  console.log(`Foods to process: ${processed.length} (max: ${MAX_ITEMS})`);
   console.log(`Skipped (missing kcal): ${skippedNoKcal}`);
+
+  // Check how many already exist to enable resume
+  const existingCount = await prisma.ingredient.count();
+  console.log(`\nExisting ingredients in DB: ${existingCount}`);
 
   // Batch translate and upsert
   console.log(`\nStarting AI translation + upsert in batches of ${BATCH_SIZE}...`);
 
   let totalUpserted = 0;
   let totalSkippedTranslation = 0;
+  let totalFallbackToEnglish = 0;
 
   for (let i = 0; i < processed.length; i += BATCH_SIZE) {
     const batch = processed.slice(i, i + BATCH_SIZE);
     const batchNum = Math.floor(i / BATCH_SIZE) + 1;
     const totalBatches = Math.ceil(processed.length / BATCH_SIZE);
 
-    if (i % 500 === 0 || i === 0) {
+    if (i % 500 === 0 || batchNum <= 3) {
       console.log(
         `  Progress: ${i}/${processed.length} items (batch ${batchNum}/${totalBatches})`
       );
@@ -219,20 +261,21 @@ async function main() {
 
     // Translate batch
     const names = batch.map((f) => f.nameEn);
-    const translations = await translateBatch(names);
+    let translations = await translateBatch(names);
 
+    // Fallback: use English names if translation completely fails
     if (!translations) {
       console.warn(
-        `  [WARN] Skipping batch ${batchNum} (translation failed for ${batch.length} items)`
+        `  [WARN] Using English names as fallback for batch ${batchNum} (${batch.length} items)`
       );
-      totalSkippedTranslation += batch.length;
-      continue;
+      translations = names;
+      totalFallbackToEnglish += batch.length;
     }
 
     // Upsert each item in the batch
     for (let j = 0; j < batch.length; j++) {
       const food = batch[j];
-      const germanName = translations[j];
+      const germanName = translations[j] ?? food.nameEn;
 
       await prisma.ingredient.upsert({
         where: { fdcId: food.fdcId },
@@ -273,6 +316,7 @@ async function main() {
   console.log("\n=== Seed Complete ===");
   console.log(`Upserted in this run: ${totalUpserted}`);
   console.log(`Skipped (translation failure): ${totalSkippedTranslation}`);
+  console.log(`Fallback to English name: ${totalFallbackToEnglish}`);
   console.log(`Total ingredients in database: ${totalInDb}`);
 
   // Spot check German ingredients
