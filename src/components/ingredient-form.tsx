@@ -45,7 +45,42 @@ export function IngredientForm({ initial }: { initial?: IngredientData }) {
     initial?.fiberPer100g !== undefined ? String(initial.fiberPer100g) : "",
   );
 
+  const [estimating, setEstimating] = useState(false);
+  const [estimateError, setEstimateError] = useState("");
+
   const isEdit = !!initial?.id;
+
+  async function handleEstimate() {
+    if (!name.trim()) {
+      setEstimateError("Bitte zuerst einen Namen eingeben");
+      return;
+    }
+    setEstimating(true);
+    setEstimateError("");
+    try {
+      const res = await fetch("/api/ingredients/estimate-nutrition", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setEstimateError(data.error || "Fehler beim Schaetzen der Naehrwerte");
+        return;
+      }
+      setKcalPer100g(String(data.kcalPer100g));
+      setProteinPer100g(String(data.proteinPer100g));
+      setFatPer100g(String(data.fatPer100g));
+      setSatFatPer100g(String(data.satFatPer100g));
+      setCarbsPer100g(String(data.carbsPer100g));
+      setSugarPer100g(String(data.sugarPer100g));
+      setFiberPer100g(String(data.fiberPer100g));
+    } catch {
+      setEstimateError("Fehler beim Schaetzen der Naehrwerte");
+    } finally {
+      setEstimating(false);
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -129,9 +164,24 @@ export function IngredientForm({ initial }: { initial?: IngredientData }) {
 
       {/* Nutrition section */}
       <div>
-        <h3 className="mb-3 text-sm font-semibold text-muted">
-          Naehrwerte pro 100g
-        </h3>
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-muted">
+            Naehrwerte pro 100g
+          </h3>
+          <button
+            type="button"
+            onClick={handleEstimate}
+            disabled={estimating || !name.trim()}
+            className="text-xs rounded-md bg-primary/10 px-3 py-1.5 text-primary hover:bg-primary/20 disabled:opacity-50 transition-colors"
+          >
+            {estimating ? "Schaetzt..." : "Naehrwerte schaetzen"}
+          </button>
+        </div>
+        {estimateError && (
+          <div className="mb-3 rounded-lg bg-red-50 p-2 text-xs text-red-600">
+            {estimateError}
+          </div>
+        )}
         <div className="space-y-4">
           {/* Calories — required */}
           <div>
