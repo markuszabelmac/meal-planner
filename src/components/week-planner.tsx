@@ -398,10 +398,12 @@ export function WeekPlanner() {
           existingAssignments={
             pickerTarget.editingEntry
               ? []
-              : getEntries(pickerTarget.date).map((e) => ({
-                  forUserId: e.forUser.id,
-                  recipeName: getMealLabel(e),
-                }))
+              : getEntries(pickerTarget.date)
+                  .filter((e) => e.mealType === pickerTarget.mealType)
+                  .map((e) => ({
+                    forUserId: e.forUser.id,
+                    recipeName: getMealLabel(e),
+                  }))
           }
           editingEntry={
             pickerTarget.editingEntry
