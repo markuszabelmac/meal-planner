@@ -74,7 +74,7 @@ Plans:
 
 **Milestone Goal:** Strukturierte Zutaten mit Nährwertdatenbank, Nährstoffberechnung pro Rezept und persönliche Nährwert-Historie.
 
-- [ ] **Phase 6: Schema & Data Foundation** - Datenbankschema für Zutaten und Nährwerte, USDA-Seed
+- [x] **Phase 6: Schema & Data Foundation** - Datenbankschema für Zutaten und Nährwerte, USDA-Seed (completed 2026-03-15)
 - [ ] **Phase 7: Ingredient Admin UI** - Zutatenverwaltung: suchen, hinzufügen, bearbeiten, löschen
 - [ ] **Phase 8: Structured Ingredient Entry & Nutrition Display** - Autocomplete-Zutateneingabe im Rezept, Nährwertanzeige pro Portion
 - [ ] **Phase 9: AI Matching & Estimation** - Auto-Matching beim URL/KI-Import, KI-Fallback für unbekannte Zutaten
@@ -92,7 +92,7 @@ Plans:
   3. The MealPlan schema supports 2 distinct meals per user per day (Mittag + Abend) without constraint errors
   4. Fuzzy ingredient search via `pg_trgm` returns results for German ingredient names against the seeded data
   5. The seed script has run and the ingredient DB contains data for common German cooking ingredients
-**Plans:** 1/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
 - [ ] 06-01-PLAN.md — Prisma schema migration (Ingredient, RecipeIngredient, MealType, Unit, pg_trgm, GIN indexes)
@@ -152,7 +152,7 @@ Plans:
 | 3. Wochenplaner | v1.0 | — | Complete | — |
 | 4. KI-Inspiration | v1.0 | — | Complete | — |
 | 5. Polish & Deploy | v1.0 | — | Complete | — |
-| 6. Schema & Data Foundation | 1/3 | In Progress|  | - |
+| 6. Schema & Data Foundation | 3/3 | Complete   | 2026-03-15 | - |
 | 7. Ingredient Admin UI | v1.1 | 0/? | Not started | - |
 | 8. Structured Ingredient Entry & Nutrition Display | v1.1 | 0/? | Not started | - |
 | 9. AI Matching & Estimation | v1.1 | 0/? | Not started | - |

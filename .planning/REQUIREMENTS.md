@@ -40,7 +40,7 @@ Requirements für Milestone v1.1: Nährstoffe.
 - [x] **DB-02**: RecipeIngredient-Verknüpfung (Rezept → Zutat mit Menge + Einheit)
 - [x] **DB-03**: MealPlan unterstützt 2 Mahlzeiten pro Tag pro User
 - [x] **DB-04**: pg_trgm Extension + GIN-Index für Fuzzy-Matching
-- [ ] **DB-05**: USDA Seed-Script mit deutschen Aliassen für gängige Zutaten
+- [x] **DB-05**: USDA Seed-Script mit deutschen Aliassen für gängige Zutaten
 
 ### Eingabe (INPUT)
 - [ ] **INPUT-01**: User kann beim Rezept-Erstellen Zutaten per Autocomplete aus der Datenbank wählen
@@ -80,7 +80,7 @@ Deferred to future release.
 | DB-02 | Phase 6 | Complete |
 | DB-03 | Phase 6 | Complete |
 | DB-04 | Phase 6 | Complete |
-| DB-05 | Phase 6 | Pending |
+| DB-05 | Phase 6 | Complete |
 | INPUT-01 | Phase 8 | Pending |
 | INPUT-02 | Phase 8 | Pending |
 | INPUT-03 | Phase 9 | Pending |

@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Nährstoffe
 status: planning
-stopped_at: "Checkpoint 06-03 Task 3: awaiting human verification of mealType UI"
-last_updated: "2026-03-15T16:05:02.399Z"
+stopped_at: Completed 06-02-PLAN.md
+last_updated: "2026-03-15T17:27:04.650Z"
 last_activity: 2026-03-15 — Roadmap created for milestone v1.1 Nährstoffe (phases 6-10)
 progress:
   total_phases: 10
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 3
-  completed_plans: 2
+  completed_plans: 3
   percent: 50
 ---
 
@@ -45,6 +45,7 @@ Progress: [██████░░░░] 50% (v1.0 complete; v1.1 not started)
 |-------|-------|-------|----------|
 | v1.0 (1-5) | — | — | — |
 | Phase 06-schema-data-foundation P06-01 | 22 | 2 tasks | 5 files |
+| Phase 06-schema-data-foundation P02 | 65 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -60,6 +61,8 @@ Progress: [██████░░░░] 50% (v1.0 complete; v1.1 not started)
 - [Phase 06-schema-data-foundation]: MealPlan API route defaults mealType to 'abend' when not specified — backward compatible with existing week planner UI
 - [Phase 06-schema-data-foundation]: MealType selector shown always in RecipePicker (not only on details step) — user can change type before browsing recipes
 - [Phase 06-schema-data-foundation]: mealType is explicit 3rd arg to onSelect/assignMeal (not folded into options) for type-safety and clarity
+- [Phase 06-schema-data-foundation]: Use npx tsx instead of node --experimental-transform-types for seed runner — ESM module resolution in Node.js 25 cannot resolve .ts imports within generated Prisma client
+- [Phase 06-schema-data-foundation]: Seed script uses English name fallback (not skip) when AI translation fails — ensures all items seeded with nameEn still searchable
 
 ### Pending Todos
 
@@ -73,6 +76,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-15T16:04:57.850Z
-Stopped at: Checkpoint 06-03 Task 3: awaiting human verification of mealType UI
+Last session: 2026-03-15T17:27:04.649Z
+Stopped at: Completed 06-02-PLAN.md
 Resume file: None
