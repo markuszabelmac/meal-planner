@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import { RecipePicker } from "./recipe-picker";
+import { RecipeDetailModal } from "./recipe-detail-modal";
 import {
   getWeekDays,
   getMonday,
@@ -40,6 +40,7 @@ export function WeekPlanner() {
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [pickerTarget, setPickerTarget] = useState<PickerTarget>(null);
+  const [viewingRecipeId, setViewingRecipeId] = useState<string | null>(null);
   const todayRef = useRef<HTMLDivElement>(null);
 
   const weekDays = getWeekDays(currentDate);
@@ -240,12 +241,12 @@ export function WeekPlanner() {
                       >
                         <div className="min-w-0 flex-1">
                           {recipe ? (
-                            <Link
-                              href={`/rezepte/${recipe.id}?from=planner`}
-                              className="text-sm font-medium leading-tight text-foreground hover:text-primary hover:underline"
+                            <button
+                              onClick={() => setViewingRecipeId(recipe.id)}
+                              className="text-sm font-medium leading-tight text-foreground hover:text-primary hover:underline text-left"
                             >
                               {label}
-                            </Link>
+                            </button>
                           ) : (
                             <p className="text-sm font-medium leading-tight">
                               {label}
@@ -385,6 +386,13 @@ export function WeekPlanner() {
           editPersonsOnly={pickerTarget.editPersonsOnly}
           onSelect={assignMeal}
           onClose={() => setPickerTarget(null)}
+        />
+      )}
+
+      {viewingRecipeId && (
+        <RecipeDetailModal
+          recipeId={viewingRecipeId}
+          onClose={() => setViewingRecipeId(null)}
         />
       )}
     </div>
