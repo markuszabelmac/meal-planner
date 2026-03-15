@@ -37,3 +37,11 @@ export function GroupIcon({ className }: { className?: string }) {
     </svg>
   );
 }
+
+export function GroceryIcon({ className }: { className?: string }) {
+  return (
+    <svg {...defaultProps} className={className}>
+      <path d="M480-80q-120 0-200-106.5T200-440q0-78 27-152.5T300-720q46-53 100-86.5T480-840q26 0 80 33.5T660-720q46 53 73 127.5T760-440q0 147-80 253.5T480-80Z" />
+    </svg>
+  );
+}

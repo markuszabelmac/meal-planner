@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { CalendarIcon, MenuBookIcon, LightbulbIcon, GroupIcon } from "./icons";
+import { CalendarIcon, MenuBookIcon, LightbulbIcon, GroupIcon, GroceryIcon } from "./icons";
 
 const navItems = [
   { href: "/", label: "Wochenplan", Icon: CalendarIcon },
   { href: "/rezepte", label: "Rezepte", Icon: MenuBookIcon },
   { href: "/inspiration", label: "Inspiration", Icon: LightbulbIcon },
   { href: "/familie", label: "Familie", Icon: GroupIcon },
+  { href: "/zutaten", label: "Zutaten", Icon: GroceryIcon },
 ];
 
 export function NavBar({ userName }: { userName: string }) {
