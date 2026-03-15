@@ -1,6 +1,26 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { Unit } from "@/generated/prisma/client";
+
+type StructuredIngredientPayload = {
+  ingredientId: string | null;
+  amount: number;
+  unit: string;
+};
+
+const ingredientInclude = {
+  ingredient: {
+    select: {
+      id: true,
+      name: true,
+      kcalPer100g: true,
+      proteinPer100g: true,
+      fatPer100g: true,
+      carbsPer100g: true,
+    },
+  },
+};
 
 // GET /api/recipes — list all recipes with optional search
 export async function GET(request: Request) {
@@ -45,8 +65,16 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const { name, description, ingredients, prepTime, servings, category, tags } =
-    body;
+  const {
+    name,
+    description,
+    ingredients,
+    prepTime,
+    servings,
+    category,
+    tags,
+    recipeIngredients,
+  } = body;
 
   if (!name?.trim()) {
     return NextResponse.json(
@@ -54,6 +82,15 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   }
+
+  const validRows = Array.isArray(recipeIngredients)
+    ? recipeIngredients.filter(
+        (row: StructuredIngredientPayload) =>
+          row.ingredientId &&
+          typeof row.amount === "number" &&
+          !isNaN(row.amount),
+      )
+    : [];
 
   const recipe = await prisma.recipe.create({
     data: {
@@ -65,9 +102,24 @@ export async function POST(request: Request) {
       category: category?.trim() || null,
       tags: tags || [],
       createdBy: session.user.id,
+      ...(validRows.length > 0
+        ? {
+            recipeIngredients: {
+              create: validRows.map((row: StructuredIngredientPayload) => ({
+                ingredientId: row.ingredientId,
+                amount: row.amount,
+                unit: row.unit as Unit,
+              })),
+            },
+          }
+        : {}),
     },
     include: {
       creator: { select: { displayName: true } },
+      recipeIngredients: {
+        include: ingredientInclude,
+        orderBy: { createdAt: "asc" },
+      },
     },
   });
 
