@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Nährstoffe
 status: completed
-stopped_at: Completed 08-02-PLAN.md
-last_updated: "2026-03-15T21:08:57.101Z"
+stopped_at: Completed quick/3-PLAN.md
+last_updated: "2026-03-15T21:46:11.203Z"
 last_activity: "2026-03-15 — Completed Phase 07-02: ingredient admin UI page routes (user verified)"
 progress:
   total_phases: 10
@@ -76,6 +76,8 @@ Progress: [███████░░░] 55% (v1.0 complete; Phase 7 complete)
 - [Phase 08-structured-ingredient-entry-nutrition-display]: Extract IngredientRowEditor to ingredient-row-editor.tsx when recipe-form.tsx exceeded 550 lines — keeps each file focused
 - [Phase 08-structured-ingredient-entry-nutrition-display]: Use requestId counter (useRef) per row to discard stale autocomplete responses — avoids race condition when user types fast
 - [Phase 08-structured-ingredient-entry-nutrition-display]: Use onMouseDown on suggestion items (not onClick) and 150ms blur delay — prevents dropdown hiding before selection registers
+- [Phase quick-3]: Used prisma db push instead of prisma migrate dev — database user lacks CREATE DATABASE permission for shadow database
+- [Phase quick-3]: bund/dose/scheibe/becher return null from unitToGrams — item-dependent units consistent with existing stueck pattern
 
 ### Pending Todos
 
@@ -89,6 +91,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-15T21:08:57.098Z
-Stopped at: Completed 08-02-PLAN.md
+Last session: 2026-03-15T21:46:05.277Z
+Stopped at: Completed quick/3-PLAN.md
 Resume file: None
