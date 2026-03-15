@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Nährstoffe
 status: planning
-stopped_at: Completed 07-01-PLAN.md
-last_updated: "2026-03-15T19:33:03.985Z"
-last_activity: 2026-03-15 — Roadmap created for milestone v1.1 Nährstoffe (phases 6-10)
+stopped_at: Completed 07-02-PLAN.md
+last_updated: "2026-03-15T20:00:00.000Z"
+last_activity: 2026-03-15 — Completed Phase 07-02: ingredient admin UI page routes
 progress:
   total_phases: 10
   completed_phases: 1
   total_plans: 5
-  completed_plans: 4
-  percent: 50
+  completed_plans: 5
+  percent: 55
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-15)
 
 **Core value:** Gemeinsame wöchentliche Essensplanung für die Familie
-**Current focus:** Phase 6 — Schema & Data Foundation (v1.1 Nährstoffe)
+**Current focus:** Phase 7 — Ingredient Admin UI (v1.1 Nährstoffe)
 
 ## Current Position
 
-Phase: 6 of 10 (Schema & Data Foundation)
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-03-15 — Roadmap created for milestone v1.1 Nährstoffe (phases 6-10)
+Phase: 7 of 10 (Ingredient Admin UI) — COMPLETE
+Plan: 2 of 2 complete
+Status: Phase complete, ready for Phase 8
+Last activity: 2026-03-15 — Completed Phase 07-02: ingredient admin UI page routes (user verified)
 
-Progress: [██████░░░░] 50% (v1.0 complete; v1.1 not started)
+Progress: [███████░░░] 55% (v1.0 complete; Phase 7 complete)
 
 ## Performance Metrics
 
@@ -47,6 +47,7 @@ Progress: [██████░░░░] 50% (v1.0 complete; v1.1 not started)
 | Phase 06-schema-data-foundation P06-01 | 22 | 2 tasks | 5 files |
 | Phase 06-schema-data-foundation P02 | 65 | 2 tasks | 4 files |
 | Phase 07-ingredient-admin-ui P01 | 3 | 2 tasks | 6 files |
+| Phase 07-ingredient-admin-ui P02 | 15 | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -66,6 +67,8 @@ Progress: [██████░░░░] 50% (v1.0 complete; v1.1 not started)
 - [Phase 06-schema-data-foundation]: Seed script uses English name fallback (not skip) when AI translation fails — ensures all items seeded with nameEn still searchable
 - [Phase 07-ingredient-admin-ui]: Prisma import path is @/generated/prisma/client not root directory — matches existing meal-plans/route.ts pattern
 - [Phase 07-ingredient-admin-ui]: DELETE /api/ingredients/[id] returns detachedRecipes count so callers can warn if recipes lose structured ingredient link
+- [Phase 07-ingredient-admin-ui P02]: Edit page is a server component loading ingredient via Prisma at request time — avoids client-side API call for initial form data
+- [Phase 07-ingredient-admin-ui P02]: List page uses no debounce on search — pg_trgm is fast and result caps (50/100) keep latency acceptable
 
 ### Pending Todos
 
@@ -79,6 +82,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-15T19:33:03.983Z
-Stopped at: Completed 07-01-PLAN.md
+Last session: 2026-03-15T20:00:00.000Z
+Stopped at: Completed 07-02-PLAN.md
 Resume file: None

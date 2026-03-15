@@ -75,7 +75,7 @@ Plans:
 **Milestone Goal:** Strukturierte Zutaten mit Nährwertdatenbank, Nährstoffberechnung pro Rezept und persönliche Nährwert-Historie.
 
 - [x] **Phase 6: Schema & Data Foundation** - Datenbankschema für Zutaten und Nährwerte, USDA-Seed (completed 2026-03-15)
-- [ ] **Phase 7: Ingredient Admin UI** - Zutatenverwaltung: suchen, hinzufügen, bearbeiten, löschen
+- [x] **Phase 7: Ingredient Admin UI** - Zutatenverwaltung: suchen, hinzufügen, bearbeiten, löschen (completed 2026-03-15)
 - [ ] **Phase 8: Structured Ingredient Entry & Nutrition Display** - Autocomplete-Zutateneingabe im Rezept, Nährwertanzeige pro Portion
 - [ ] **Phase 9: AI Matching & Estimation** - Auto-Matching beim URL/KI-Import, KI-Fallback für unbekannte Zutaten
 - [ ] **Phase 10: Nutrition History** - "Meine Nährwerte" mit Tages-/Wochenansicht und Historien-Navigation
@@ -108,7 +108,7 @@ Plans:
   2. User can create a new ingredient with name, unit, and nutrition values per 100g
   3. User can edit an existing ingredient's name, aliases, and nutrition values
   4. User can delete an ingredient (with safe handling if it is linked to recipes)
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 
 Plans:
 - [ ] 07-01-PLAN.md — Ingredient CRUD API routes + shared components (form, delete button, nav icon)
@@ -157,7 +157,7 @@ Plans:
 | 4. KI-Inspiration | v1.0 | — | Complete | — |
 | 5. Polish & Deploy | v1.0 | — | Complete | — |
 | 6. Schema & Data Foundation | 3/3 | Complete   | 2026-03-15 | - |
-| 7. Ingredient Admin UI | 1/2 | In Progress|  | - |
+| 7. Ingredient Admin UI | 2/2 | Complete   | 2026-03-15 | - |
 | 8. Structured Ingredient Entry & Nutrition Display | v1.1 | 0/? | Not started | - |
 | 9. AI Matching & Estimation | v1.1 | 0/? | Not started | - |
 | 10. Nutrition History | v1.1 | 0/? | Not started | - |
