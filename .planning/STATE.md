@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Nährstoffe
 status: planning
-stopped_at: Completed 06-01-PLAN.md
-last_updated: "2026-03-15T15:59:10.873Z"
+stopped_at: "Checkpoint 06-03 Task 3: awaiting human verification of mealType UI"
+last_updated: "2026-03-15T16:05:02.399Z"
 last_activity: 2026-03-15 — Roadmap created for milestone v1.1 Nährstoffe (phases 6-10)
 progress:
   total_phases: 10
   completed_phases: 0
   total_plans: 3
-  completed_plans: 1
+  completed_plans: 2
   percent: 50
 ---
 
@@ -58,6 +58,8 @@ Progress: [██████░░░░] 50% (v1.0 complete; v1.1 not started)
 - [Phase 06-schema-data-foundation]: Migration adds meal_type as nullable, backfills existing rows to 'abend', then sets NOT NULL — avoids DEFAULT constraint issues with Prisma enum types on populated tables
 - [Phase 06-schema-data-foundation]: unitToGrams returns null for 'stueck' (not 0 or throws) — forces callers to implement AI-estimation fallback explicitly in Phase 9
 - [Phase 06-schema-data-foundation]: MealPlan API route defaults mealType to 'abend' when not specified — backward compatible with existing week planner UI
+- [Phase 06-schema-data-foundation]: MealType selector shown always in RecipePicker (not only on details step) — user can change type before browsing recipes
+- [Phase 06-schema-data-foundation]: mealType is explicit 3rd arg to onSelect/assignMeal (not folded into options) for type-safety and clarity
 
 ### Pending Todos
 
@@ -71,6 +73,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-15T15:59:10.871Z
-Stopped at: Completed 06-01-PLAN.md
+Last session: 2026-03-15T16:04:57.850Z
+Stopped at: Checkpoint 06-03 Task 3: awaiting human verification of mealType UI
 Resume file: None
