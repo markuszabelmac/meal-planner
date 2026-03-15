@@ -16,7 +16,14 @@ const SUGGESTED_CATEGORIES = [
   "Schnell & Einfach",
 ];
 
-type RecipeData = {
+export type RecipeIngredientFormData = {
+  ingredientId: string | null;
+  ingredientName: string;
+  amount: string;
+  unit: string;
+};
+
+export type RecipeData = {
   id?: string;
   name: string;
   description: string;
@@ -27,6 +34,7 @@ type RecipeData = {
   servings: string;
   category: string;
   tags: string[];
+  recipeIngredients?: RecipeIngredientFormData[];
 };
 
 export function RecipeForm({ initial }: { initial?: RecipeData }) {

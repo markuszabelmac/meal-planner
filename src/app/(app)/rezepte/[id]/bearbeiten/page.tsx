@@ -9,7 +9,17 @@ export default async function EditRecipePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const recipe = await prisma.recipe.findUnique({ where: { id } });
+  const recipe = await prisma.recipe.findUnique({
+    where: { id },
+    include: {
+      recipeIngredients: {
+        include: {
+          ingredient: { select: { id: true, name: true } },
+        },
+        orderBy: { createdAt: "asc" },
+      },
+    },
+  });
 
   if (!recipe) notFound();
 
@@ -35,6 +45,12 @@ export default async function EditRecipePage({
           servings: recipe.servings?.toString() || "",
           category: recipe.category || "",
           tags: recipe.tags,
+          recipeIngredients: recipe.recipeIngredients.map((ri) => ({
+            ingredientId: ri.ingredientId,
+            ingredientName: ri.ingredient?.name || "",
+            amount: ri.amount.toString(),
+            unit: ri.unit,
+          })),
         }}
       />
     </div>
