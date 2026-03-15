@@ -9,6 +9,10 @@ export const UNIT_LABELS: Record<string, string> = {
   el: "EL",
   tl: "TL",
   prise: "Prise",
+  bund: "Bund",
+  dose: "Dose",
+  scheibe: "Scheibe",
+  becher: "Becher",
 };
 
 export type IngredientRowState = {

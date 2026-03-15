@@ -1,4 +1,4 @@
-export type Unit = "g" | "kg" | "ml" | "l" | "stueck" | "el" | "tl" | "prise";
+export type Unit = "g" | "kg" | "ml" | "l" | "stueck" | "el" | "tl" | "prise" | "bund" | "dose" | "scheibe" | "becher";
 
 /**
  * Conversion factors from each unit to grams.
@@ -13,6 +13,10 @@ export const UNIT_TO_GRAMS: Record<Unit, number | null> = {
   tl: 5, // 1 Teelöffel ≈ 5 g
   prise: 0.5, // 1 Prise ≈ 0.5 g
   stueck: null, // no fixed conversion; Phase 9 AI fallback
+  bund: null,   // 1 Bund varies by herb (parsley vs chives)
+  dose: null,   // 1 Dose varies by product (400g tomatoes vs 200g tuna)
+  scheibe: null, // 1 Scheibe varies by item (bread vs cheese)
+  becher: null, // 1 Becher varies by product (150g yogurt vs 200g cream)
 };
 
 /**
