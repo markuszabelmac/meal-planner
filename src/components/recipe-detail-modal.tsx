@@ -3,6 +3,22 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { computeNutritionTotals } from "@/lib/nutrition";
+
+type RecipeIngredient = {
+  id: string;
+  amount: number;
+  unit: string;
+  ingredientId: string | null;
+  ingredient: {
+    id: string;
+    name: string;
+    kcalPer100g: number;
+    proteinPer100g: number | null;
+    fatPer100g: number | null;
+    carbsPer100g: number | null;
+  } | null;
+};
 
 type Recipe = {
   id: string;
@@ -17,6 +33,7 @@ type Recipe = {
   tags: string[];
   sourceUrl: string | null;
   creator: { displayName: string };
+  recipeIngredients?: RecipeIngredient[];
 };
 
 type Props = {
@@ -61,6 +78,11 @@ export function RecipeDetailModal({ recipeId, onClose }: Props) {
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [onClose]);
+
+  const nutrition =
+    recipe && recipe.recipeIngredients
+      ? computeNutritionTotals(recipe.recipeIngredients, recipe.servings)
+      : null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -189,8 +211,56 @@ export function RecipeDetailModal({ recipeId, onClose }: Props) {
                 </div>
               )}
 
-              {/* Ingredients */}
-              {recipe.ingredients && (
+              {/* Nutrition table — only shown when computable structured ingredients exist */}
+              {nutrition && (
+                <div className="mb-4">
+                  <h3 className="mb-2 font-semibold">Nahrwerte pro Portion</h3>
+                  <div className="rounded-lg border border-border bg-card overflow-hidden">
+                    <table className="w-full text-sm">
+                      <tbody>
+                        <tr className="border-b border-border">
+                          <td className="px-4 py-2 text-muted">Kalorien</td>
+                          <td className="px-4 py-2 text-right font-medium">{nutrition.kcal} kcal</td>
+                        </tr>
+                        <tr className="border-b border-border">
+                          <td className="px-4 py-2 text-muted">Protein</td>
+                          <td className="px-4 py-2 text-right font-medium">{nutrition.protein} g</td>
+                        </tr>
+                        <tr className="border-b border-border">
+                          <td className="px-4 py-2 text-muted">Fett</td>
+                          <td className="px-4 py-2 text-right font-medium">{nutrition.fat} g</td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-2 text-muted">Kohlenhydrate</td>
+                          <td className="px-4 py-2 text-right font-medium">{nutrition.carbs} g</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  {nutrition.hasSkippedStueck && (
+                    <p className="mt-1 text-xs text-muted">
+                      * Zutaten mit Einheit &quot;Stück&quot; sind nicht eingerechnet.
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Ingredients — structured list when available, freetext fallback otherwise */}
+              {recipe.recipeIngredients && recipe.recipeIngredients.length > 0 ? (
+                <div className="mb-4">
+                  <h3 className="mb-2 font-semibold">Zutaten</h3>
+                  <div className="rounded-lg border border-border bg-card p-4">
+                    <p className="text-sm leading-relaxed">
+                      {recipe.recipeIngredients
+                        .map((ri) => {
+                          const name = ri.ingredient?.name ?? "Unbekannte Zutat";
+                          return `${ri.amount} ${ri.unit} ${name}`;
+                        })
+                        .join(", ")}
+                    </p>
+                  </div>
+                </div>
+              ) : recipe.ingredients ? (
                 <div className="mb-4">
                   <h3 className="mb-2 font-semibold">Zutaten</h3>
                   <div className="rounded-lg border border-border bg-card p-4">
@@ -203,7 +273,7 @@ export function RecipeDetailModal({ recipeId, onClose }: Props) {
                     </p>
                   </div>
                 </div>
-              )}
+              ) : null}
 
               {/* Instructions */}
               {recipe.instructions && (
