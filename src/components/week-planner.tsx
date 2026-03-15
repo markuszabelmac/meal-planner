@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { RecipePicker } from "./recipe-picker";
 import {
   getWeekDays,
@@ -232,15 +233,24 @@ export function WeekPlanner() {
 
                 {groups.length > 0 && (
                   <div className="space-y-1.5">
-                    {groups.map(({ label, members }) => (
+                    {groups.map(({ label, recipe, members }) => (
                       <div
                         key={label}
                         className="flex items-start gap-2 rounded-md bg-primary/5 p-2"
                       >
                         <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium leading-tight">
-                            {label}
-                          </p>
+                          {recipe ? (
+                            <Link
+                              href={`/rezepte/${recipe.id}?from=planner`}
+                              className="text-sm font-medium leading-tight text-foreground hover:text-primary hover:underline"
+                            >
+                              {label}
+                            </Link>
+                          ) : (
+                            <p className="text-sm font-medium leading-tight">
+                              {label}
+                            </p>
+                          )}
                           <div className="mt-0.5 flex flex-wrap gap-1">
                             {members.length === familyMembers.length ? (
                               <span className="text-xs text-muted">Alle</span>
