@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Nährstoffe
 status: completed
-stopped_at: Completed 08-01-PLAN.md
-last_updated: "2026-03-15T21:04:44.948Z"
+stopped_at: Completed 08-02-PLAN.md
+last_updated: "2026-03-15T21:08:57.101Z"
 last_activity: "2026-03-15 — Completed Phase 07-02: ingredient admin UI page routes (user verified)"
 progress:
   total_phases: 10
   completed_phases: 2
   total_plans: 8
-  completed_plans: 6
+  completed_plans: 7
   percent: 55
 ---
 
@@ -49,6 +49,7 @@ Progress: [███████░░░] 55% (v1.0 complete; Phase 7 complete)
 | Phase 07-ingredient-admin-ui P01 | 3 | 2 tasks | 6 files |
 | Phase 07-ingredient-admin-ui P02 | 15 | 3 tasks | 3 files |
 | Phase 08-structured-ingredient-entry-nutrition-display P01 | 2 | 2 tasks | 4 files |
+| Phase 08-structured-ingredient-entry-nutrition-display P02 | 2 | 1 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -72,6 +73,9 @@ Progress: [███████░░░] 55% (v1.0 complete; Phase 7 complete)
 - [Phase 07-ingredient-admin-ui P02]: List page uses no debounce on search — pg_trgm is fast and result caps (50/100) keep latency acceptable
 - [Phase 08-structured-ingredient-entry-nutrition-display]: Cast unit string to Unit enum at API boundary; invalid values rejected by DB constraint
 - [Phase 08-structured-ingredient-entry-nutrition-display]: Export RecipeData and RecipeIngredientFormData types from recipe-form.tsx for Plan 02 use
+- [Phase 08-structured-ingredient-entry-nutrition-display]: Extract IngredientRowEditor to ingredient-row-editor.tsx when recipe-form.tsx exceeded 550 lines — keeps each file focused
+- [Phase 08-structured-ingredient-entry-nutrition-display]: Use requestId counter (useRef) per row to discard stale autocomplete responses — avoids race condition when user types fast
+- [Phase 08-structured-ingredient-entry-nutrition-display]: Use onMouseDown on suggestion items (not onClick) and 150ms blur delay — prevents dropdown hiding before selection registers
 
 ### Pending Todos
 
@@ -85,6 +89,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-15T21:04:44.946Z
-Stopped at: Completed 08-01-PLAN.md
+Last session: 2026-03-15T21:08:57.098Z
+Stopped at: Completed 08-02-PLAN.md
 Resume file: None
